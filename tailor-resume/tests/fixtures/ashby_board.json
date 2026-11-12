@@ -1,0 +1,95 @@
+{
+  "_note": "Shape taken from a real API response fetched 2026-11-11; every name, id and text value replaced with made-up content.",
+  "apiVersion": "1",
+  "jobs": [
+    {
+      "id": "aaaaaaaa-bbbb-cccc-dddd-000000000001",
+      "title": "Platform Engineer",
+      "department": "Engineering",
+      "team": "Platform",
+      "employmentType": "FullTime",
+      "location": "Seattle, WA",
+      "secondaryLocations": [
+        {
+          "location": "Portland, OR",
+          "address": {
+            "postalAddress": {
+              "addressLocality": "Portland",
+              "addressRegion": "OR",
+              "addressCountry": "United States"
+            }
+          }
+        }
+      ],
+      "shouldDisplayCompensationOnJobPostings": true,
+      "publishedAt": "2026-11-02T15:00:00.000+00:00",
+      "isListed": true,
+      "isRemote": false,
+      "workplaceType": "Hybrid",
+      "address": {
+        "postalAddress": {
+          "addressLocality": "Seattle",
+          "addressRegion": "WA",
+          "addressCountry": "United States"
+        }
+      },
+      "jobUrl": "https://jobs.ashbyhq.com/exampleco/aaaaaaaa-bbbb-cccc-dddd-000000000001",
+      "applyUrl": "https://jobs.ashbyhq.com/exampleco/aaaaaaaa-bbbb-cccc-dddd-000000000001/application",
+      "descriptionHtml": "<p>Example Co builds route-planning software for regional freight carriers. The data platform team owns the pipelines that feed pricing, dispatch and billing, and this role works on them every day with analysts and backend engineers.</p><ul><li>Build and run batch pipelines in Python and Airflow</li><li>Model warehouse tables in dbt and Snowflake</li><li>Write SQL that analysts can read and reuse</li></ul><ul><li>2+ years of experience with Python and SQL</li><li>Experience with Airflow or a similar scheduler</li><li>Experience with PostgreSQL</li><li>Clear written communication</li></ul>",
+      "descriptionPlain": "Example Co builds route-planning software for regional freight carriers. The data platform team owns the pipelines that feed pricing, dispatch and billing, and this role works on them every day with analysts and backend engineers.\n\nWhat you will do\n- Build and run batch pipelines in Python and Airflow\n- Model warehouse tables in dbt and Snowflake\n- Write SQL that analysts can read and reuse\n\nWhat we look for\n- 2+ years of experience with Python and SQL\n- Experience with Airflow or a similar scheduler\n- Experience with PostgreSQL\n- Clear written communication",
+      "compensation": {
+        "compensationTierSummary": "$120K – $150K",
+        "scrapeableCompensationSalarySummary": "$120K - $150K",
+        "compensationTiers": [],
+        "summaryComponents": [
+          {
+            "compensationType": "Salary",
+            "interval": "1 YEAR",
+            "currencyCode": "USD",
+            "minValue": 120000,
+            "maxValue": 150000
+          }
+        ]
+      }
+    },
+    {
+      "id": "aaaaaaaa-bbbb-cccc-dddd-000000000002",
+      "title": "Data Engineer",
+      "department": "Engineering",
+      "team": "Platform",
+      "employmentType": "FullTime",
+      "location": "Remote",
+      "secondaryLocations": [],
+      "shouldDisplayCompensationOnJobPostings": true,
+      "publishedAt": "2026-11-02T15:00:00.000+00:00",
+      "isListed": true,
+      "isRemote": true,
+      "workplaceType": "Remote",
+      "address": {
+        "postalAddress": {
+          "addressLocality": "Remote",
+          "addressRegion": "Remote",
+          "addressCountry": "United States"
+        }
+      },
+      "jobUrl": "https://jobs.ashbyhq.com/exampleco/aaaaaaaa-bbbb-cccc-dddd-000000000002",
+      "applyUrl": "https://jobs.ashbyhq.com/exampleco/aaaaaaaa-bbbb-cccc-dddd-000000000002/application",
+      "descriptionHtml": "<p>Example Co builds route-planning software for regional freight carriers. The data platform team owns the pipelines that feed pricing, dispatch and billing, and this role works on them every day with analysts and backend engineers.</p><ul><li>Build and run batch pipelines in Python and Airflow</li><li>Model warehouse tables in dbt and Snowflake</li><li>Write SQL that analysts can read and reuse</li></ul><ul><li>2+ years of experience with Python and SQL</li><li>Experience with Airflow or a similar scheduler</li><li>Experience with PostgreSQL</li><li>Clear written communication</li></ul>",
+      "descriptionPlain": "Example Co builds route-planning software for regional freight carriers. The data platform team owns the pipelines that feed pricing, dispatch and billing, and this role works on them every day with analysts and backend engineers.\n\nWhat you will do\n- Build and run batch pipelines in Python and Airflow\n- Model warehouse tables in dbt and Snowflake\n- Write SQL that analysts can read and reuse\n\nWhat we look for\n- 2+ years of experience with Python and SQL\n- Experience with Airflow or a similar scheduler\n- Experience with PostgreSQL\n- Clear written communication",
+      "compensation": {
+        "compensationTierSummary": "$120K – $150K",
+        "scrapeableCompensationSalarySummary": "$120K - $150K",
+        "compensationTiers": [],
+        "summaryComponents": [
+          {
+            "compensationType": "Salary",
+            "interval": "1 YEAR",
+            "currencyCode": "USD",
+            "minValue": 120000,
+            "maxValue": 150000
+          }
+        ]
+      }
+    }
+  ]
+}

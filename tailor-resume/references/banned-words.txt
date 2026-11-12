@@ -1,0 +1,36 @@
+# W2 starter list. One word or phrase per line; # starts a comment.
+# A single word is matched in every form (leverage, leveraged, leveraging).
+# A phrase is matched as written. Resume-Matcher's 59 AI phrases
+# (scripts/ai_phrases.py) and the user's own Resume Lab/banned-words.txt are
+# added to this list at run time.
+delve
+showcase
+underscore
+pivotal
+intricate
+meticulous
+tapestry
+testament
+seamless
+leverage
+utilize
+spearhead
+orchestrate
+synergy
+robust
+crucial
+vibrant
+landscape
+realm
+holistic
+cutting-edge
+state-of-the-art
+game-changer
+transformative
+innovative
+passionate
+dynamic
+results-driven
+proven track record
+played a key role
+instrumental in

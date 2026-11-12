@@ -1,0 +1,43 @@
+{
+  "_note": "Shape taken from a real API response fetched 2026-11-11; every name, id and text value replaced with made-up content.",
+  "absolute_url": "https://boards.greenhouse.io/exampleco/jobs/4000001",
+  "company_name": "Example Co",
+  "content": "&lt;p&gt;Example Co builds route-planning software for regional freight carriers. The data platform team owns the pipelines that feed pricing, dispatch and billing, and this role works on them every day with analysts and backend engineers.&lt;/p&gt;&lt;h3&gt;What you will do&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;Build and run batch pipelines in Python and Airflow&lt;/li&gt;&lt;li&gt;Model warehouse tables in dbt and Snowflake&lt;/li&gt;&lt;li&gt;Write SQL that analysts can read and reuse&lt;/li&gt;&lt;/ul&gt;&lt;h3&gt;What we look for&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;2+ years of experience with Python and SQL&lt;/li&gt;&lt;li&gt;Experience with Airflow or a similar scheduler&lt;/li&gt;&lt;li&gt;Experience with PostgreSQL&lt;/li&gt;&lt;li&gt;Clear written communication&lt;/li&gt;&lt;/ul&gt;&lt;h3&gt;Nice to have&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;dbt&lt;/li&gt;&lt;li&gt;Docker and Kubernetes&lt;/li&gt;&lt;li&gt;Terraform on AWS&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Example Co is an equal opportunity employer &amp;amp; welcomes all applicants.&lt;/p&gt;",
+  "departments": [
+    {
+      "id": 1,
+      "name": "Data",
+      "child_ids": [],
+      "parent_id": null
+    }
+  ],
+  "first_published": "2026-11-01T10:00:00-05:00",
+  "id": 4000001,
+  "internal_job_id": 3000001,
+  "language": "en",
+  "location": {
+    "name": "Austin, TX"
+  },
+  "metadata": null,
+  "offices": [
+    {
+      "id": 2,
+      "name": "Austin",
+      "location": "Austin, TX, United States",
+      "child_ids": [],
+      "parent_id": null
+    }
+  ],
+  "pay_input_ranges": [
+    {
+      "min_cents": 12000000,
+      "max_cents": 15000000,
+      "currency_type": "USD",
+      "title": "Annual salary range",
+      "blurb": ""
+    }
+  ],
+  "requisition_id": "4471",
+  "title": "Data Engineer II - Req 4471",
+  "updated_at": "2026-11-05T10:00:00-05:00"
+}

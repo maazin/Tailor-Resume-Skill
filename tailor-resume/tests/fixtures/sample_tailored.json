@@ -1,0 +1,152 @@
+{
+  "personalInfo": {
+    "title": "Data Engineer II",
+    "location": "Relocating to Austin, TX"
+  },
+  "skillGroups": [
+    {
+      "label": "Languages",
+      "items": [
+        "Python",
+        "SQL",
+        "TypeScript",
+        "JavaScript",
+        "Go",
+        "Bash"
+      ]
+    },
+    {
+      "label": "Data & ML",
+      "items": [
+        "Airflow",
+        "dbt",
+        "PyTorch",
+        "MLflow",
+        "LangChain",
+        "RAG",
+        "pgvector",
+        "Tableau"
+      ]
+    },
+    {
+      "label": "Infra & Tools",
+      "items": [
+        "Docker",
+        "Kubernetes",
+        "Terraform",
+        "AWS",
+        "GCP",
+        "GitHub Actions",
+        "pytest",
+        "Jest",
+        "Playwright",
+        "Prometheus",
+        "Grafana"
+      ]
+    },
+    {
+      "label": "Full-Stack",
+      "items": [
+        "PostgreSQL",
+        "FastAPI",
+        "REST APIs",
+        "Redis",
+        "React",
+        "Node.js",
+        "GraphQL"
+      ]
+    }
+  ],
+  "workExperience": [
+    {
+      "company": "Northwind Analytics",
+      "description": [
+        "Built a nightly ETL pipeline in Python and Airflow that loaded 2M+ order records from 6 vendor feeds into PostgreSQL, cutting the manual reconciliation work for the finance team from 5 hours to 20 minutes per week",
+        "Modeled 9 dbt tables for revenue reporting with tests on keys and freshness, replacing 3 spreadsheet exports and giving analysts one documented source for weekly sales and refund numbers across the finance team",
+        "Added 85 pytest data-quality tests and a GitHub Actions check that blocked schema drift before deploys, catching 12 bad vendor files in the first month without a single failed production load in the nightly pipeline"
+      ]
+    },
+    {
+      "company": "Alpine Robotics Lab",
+      "description": [
+        "Trained a PyTorch image classifier on 18K labeled warehouse photos to flag damaged pallets, reaching 93% accuracy on a held-out set of 2K images and replacing a manual check done each week by 3 lab members",
+        "Wrote a FastAPI service that served model predictions to 4 robot controllers over REST, holding p95 latency under 120ms on one GPU by batching incoming requests and caching repeated camera frames in Redis",
+        "Tracked 60 training runs in MLflow with fixed seeds and versioned datasets, so that a 4-person team could reproduce any reported result from its run ID in under 10 minutes instead of retraining the PyTorch model"
+      ]
+    },
+    {
+      "company": "Cascade Health",
+      "description": [
+        "Shipped 11 React and TypeScript screens for a patient scheduling tool used by staff at 30 clinics, working from Figma designs and closing 46 tickets across 6 sprints of 2 weeks each as part of a team of 5 engineers",
+        "Fixed a double-booking bug in the Node.js scheduling API by adding a PostgreSQL unique constraint and a retry path, removing about 15 duplicate appointments per week that clinic staff had reported across 30 clinics",
+        "Raised unit test coverage on the booking module from 48% to 81% with Jest and Playwright, which caught 7 regressions in code review before they reached the staging environment used by the team of 5 engineers"
+      ]
+    }
+  ],
+  "personalProjects": [
+    {
+      "name": "TrailCast",
+      "stack": [
+        "Python",
+        "PostgreSQL",
+        "FastAPI",
+        "Redis",
+        "Docker",
+        "GitHub Actions"
+      ],
+      "description": [
+        "Launched a trail-conditions API that merges 3 public weather feeds and 1.2K ranger reports into one PostgreSQL database, serving 900 weekly requests from a Python and FastAPI backend on a single $7 server",
+        "Cut average response time from 480ms to 95ms by caching forecast lookups in Redis with a 15-minute expiry, measured across 10K replayed requests taken from production access logs of the FastAPI service",
+        "Automated deploys with Docker and a GitHub Actions pipeline that ran 140 pytest tests on every push, taking a release from 12 manual steps down to 1 merged pull request for the whole PostgreSQL and Redis stack"
+      ]
+    },
+    {
+      "name": "DocSearch",
+      "stack": [
+        "Python",
+        "PostgreSQL",
+        "pgvector",
+        "LangChain",
+        "RAG",
+        "OpenAI API"
+      ],
+      "description": [
+        "Created a retrieval tool in Python over 4K pages of course notes using LangChain and pgvector, answering study questions with links to the source page in about 3 seconds per query on a PostgreSQL and pgvector backend",
+        "Improved answer relevance from 0.52 to 0.71 MRR on 150 labeled questions by combining PostgreSQL full-text search with vector search in pgvector and reranking the top 20 results before they reached the model",
+        "Reduced OpenAI API spend 64% by caching embeddings for unchanged pages and sending only the 5 closest passages to the model, tracked over 2K logged queries from the course notes retrieval tool built on LangChain"
+      ]
+    },
+    {
+      "name": "QueueWatch",
+      "stack": [
+        "Kubernetes",
+        "Terraform",
+        "Go",
+        "GCP",
+        "Prometheus",
+        "Grafana"
+      ],
+      "description": [
+        "Deployed a Go job runner to Kubernetes on GCP with Terraform, scaling workers on queue depth and processing 80K jobs per day across 3 node pools during load tests of the full Prometheus and Grafana setup",
+        "Instrumented the runner with Prometheus metrics and 4 Grafana dashboards, which traced a memory leak to an unclosed channel in the Go worker loop and cut pod restarts from 22 per day to 0 during load tests",
+        "Enforced graceful shutdown with a 30-second drain window on Kubernetes, so that 500 in-flight jobs finished during rolling updates with no lost or repeated work across all 3 node pools on GCP during load tests"
+      ]
+    },
+    {
+      "name": "LedgerLite",
+      "stack": [
+        "PostgreSQL",
+        "TypeScript",
+        "React",
+        "Node.js",
+        "GraphQL",
+        "Jest"
+      ],
+      "description": [
+        "Developed a budgeting web app in React and TypeScript with a GraphQL API on Node.js, supporting 5 account types and importing 3K bank transactions from CSV files in under 2 seconds on a PostgreSQL database",
+        "Designed a PostgreSQL schema of 9 tables with row-level checks on every transfer, so that 250 generated test ledgers balanced to the cent after 50K random transactions run through the Jest test suite",
+        "Covered the import and reconciliation paths with 120 Jest tests, which exposed 6 rounding defects in currency conversion before the first public release of the React and Node.js budgeting app"
+      ]
+    }
+  ]
+}

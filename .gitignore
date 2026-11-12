@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.aux
+*.log
+*.out
+.DS_Store
+# Personal data never belongs in this repo
+Resume Lab/
+master.tex
+confirmed-skills.md
+applications/

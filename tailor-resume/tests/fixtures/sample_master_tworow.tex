@@ -1,0 +1,155 @@
+% Test fixture: the two-row education template (company-first headings, 10pt body,
+% 0.40in margins, ragged right). Jordan Rivera and every fact here are made up.
+\documentclass[letterpaper,10pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{charter}
+\usepackage[letterpaper,left=0.40in,right=0.40in,top=0.40in,bottom=0.40in]{geometry}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{xstring}
+\usepackage[hidelinks]{hyperref}
+\input{glyphtounicode}
+\pdfgentounicode=1
+\pagestyle{empty}
+\urlstyle{same}
+\raggedright
+\raggedbottom
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\renewcommand{\normalsize}{\fontsize{10}{11.5}\selectfont}
+\renewcommand{\small}{\fontsize{9}{10.5}\selectfont}
+\renewcommand{\large}{\fontsize{11}{12}\selectfont}
+\renewcommand{\LARGE}{\fontsize{20}{22}\selectfont}
+\AtBeginDocument{\normalsize}
+\definecolor{linknavy}{HTML}{1A3E6E}
+\newlength{\sectiongap}
+\setlength{\sectiongap}{8pt}
+\newlength{\entrygap}
+\setlength{\entrygap}{6pt}
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
+\titlespacing*{\section}{0pt}{\sectiongap}{4pt}
+\newcommand{\resumeItem}[1]{\item #1}
+% Jake's Resume education layout; ordinary text lines keep the major extractable.
+\newcommand{\educationheading}[4]{%
+  \textbf{#1}\hfill #2\par
+  \textit{#3}\hfill \textit{#4}\par
+}
+% Education uses the requested two-line layout; other entry headings stay unchanged.
+\newcommand{\resumeSubheading}[4]{
+  \item \IfSubStr{#3}{Bachelor of Science}{%
+    \educationheading{#1}{#2}{#3}{#4}%
+  }{\textbf{#1} \textbar{} #3 \textbar{} #2 \textbar{} #4\par}
+}
+\newcommand{\resumeProject}[2]{\item #1\if\relax\detokenize{#2}\relax\else\ \textbar{} #2\fi\par}
+\newcommand{\link}[2]{\href{#1}{\color{linknavy}\underline{\textbf{#2}}}}
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0pt,label={},itemsep=\entrygap,topsep=0pt,parsep=0pt,partopsep=0pt]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.15in,label=\textbullet,labelsep=4pt,labelwidth=5pt,itemsep=2pt,topsep=3pt,parsep=0pt,partopsep=0pt]}
+\newcommand{\resumeItemListEnd}{\end{itemize}}
+\hypersetup{pdftitle={Jordan Rivera - Resume},pdfauthor={Jordan Rivera},pdfsubject={Software Engineer},pdfkeywords={Python}}
+\begin{document}
+\begin{center}
+  {\LARGE\bfseries Jordan Rivera} \\[3pt]
+  Software Engineer \\[3pt]
+  \small   Denver, CO \textbar{}
+  555-010-0199 \textbar{}
+  \href{mailto:jordan.rivera@example.com}{jordan.rivera@example.com} \textbar{}
+  \href{https://jrivera.example.com}{jrivera.example.com} \textbar{}
+  \href{https://github.com/jrivera-example}{github.com/jrivera-example} \textbar{}
+  \href{https://linkedin.com/in/jordanrivera-example}{LinkedIn}
+\end{center}
+\section{EDUCATION}
+\resumeSubHeadingListStart
+\resumeSubheading{Front Range University}{Denver, CO}{Bachelor of Science in Computer Science, GPA: 3.8/4.0}{Aug 2022 - May 2026}
+\resumeItemListStart
+\resumeItem{\textbf{Relevant Coursework:} Data Structures, Database Systems, Operating Systems}
+\resumeItemListEnd
+\resumeSubHeadingListEnd
+% COURSEWORK BANK: completed courses (made up for the tests).
+% Software: CS 2100 Data Structures; Fall 2023; grade A.
+% Software: CS 3300 Software Engineering; Spring 2025; grade A-.
+% Data: CS 3500 Database Systems; Fall 2024; grade A.
+% Data: CS 4400 Machine Learning; Spring 2025; grade B+.
+% Systems: CS 3600 Operating Systems; Spring 2024; grade B.
+% Systems: CS 4600 Computer Networks; Fall 2025; grade A.
+\section{TECHNICAL SKILLS}
+\begin{itemize}[leftmargin=0pt,label={},topsep=0pt,parsep=0pt,itemsep=0pt]
+  \item
+    \textbf{Languages:} Python, TypeScript, JavaScript, Go, SQL, Bash \\
+    \textbf{Full-Stack:} React, Node.js, FastAPI, GraphQL, REST APIs, PostgreSQL, Redis \\
+    \textbf{Data \& ML:} Airflow, dbt, PyTorch, MLflow, LangChain, RAG, pgvector, Tableau \\
+    \textbf{Infra \& Tools:} Docker, Kubernetes, Terraform, AWS, GCP, GitHub Actions, pytest, Jest, Playwright, Prometheus, Grafana
+\end{itemize}
+\section{EXPERIENCE}
+\resumeSubHeadingListStart
+  \resumeSubheading
+    {Northwind Analytics}{Denver, CO}
+    {Data Engineering Intern}{May 2025 - Aug 2025}
+    \resumeItemListStart
+      \resumeItem{Built a nightly ETL pipeline in Python and Airflow that loaded 2M+ order records from 6 vendor feeds into PostgreSQL, cutting the manual reconciliation work for the finance team from 5 hours to 20 minutes per week}
+      \resumeItem{Rewrote 14 slow reporting queries in SQL with window functions and partial indexes, lowering median dashboard load time from 9.2s to 1.4s for 40 daily users of the internal Tableau workspace}
+      \resumeItem{Added 85 pytest data-quality tests and a GitHub Actions check that blocked schema drift before deploys, catching 12 bad vendor files in the first month without a single failed production load}
+      % --- Alternates: swap in by role ---
+      % \resumeItem{Modeled 9 dbt tables for revenue reporting with tests on keys and freshness, replacing 3 spreadsheet exports and giving analysts one documented source for weekly sales and refund numbers}
+      % \resumeItem{Containerized the pipeline with Docker and deployed it to AWS ECS with Terraform, replacing a cron job on one shared server and making each run repeatable from a single tagged image}
+    \resumeItemListEnd
+  \resumeSubheading
+    {Alpine Robotics Lab}{Boulder, CO}
+    {Undergraduate Research Assistant}{Aug 2024 - May 2025}
+    \resumeItemListStart
+      \resumeItem{Trained a PyTorch image classifier on 18K labeled warehouse photos to flag damaged pallets, reaching 93\% accuracy on a held-out set of 2K images and replacing a manual check done by 3 lab members}
+      \resumeItem{Wrote a FastAPI service that served model predictions to 4 robot controllers over REST, holding p95 latency under 120ms on one GPU by batching requests and caching repeated frames in Redis}
+      \resumeItem{Tracked 60 training runs in MLflow with fixed seeds and versioned datasets, so that a 4-person team could reproduce any reported result from its run ID in under 10 minutes}
+      % \resumeItem{Presented the pallet-damage results to a 25-person lab meeting and wrote the methods section of a workshop paper, describing data collection, labeling rules and the evaluation split}
+    \resumeItemListEnd
+  \resumeSubheading
+    {Cascade Health}{Remote}
+    {Software Engineering Intern}{May 2024 - Aug 2024}
+    \resumeItemListStart
+      \resumeItem{Shipped 11 React and TypeScript screens for a patient scheduling tool used by 30 clinics, working from Figma designs and closing 46 tickets across 6 two-week sprints with a team of 5 engineers}
+      \resumeItem{Fixed a double-booking bug in the Node.js scheduling API by adding a PostgreSQL unique constraint and a retry path, removing about 15 duplicate appointments per week reported by clinic staff}
+      \resumeItem{Raised unit test coverage on the booking module from 48\% to 81\% with Jest and Playwright, which caught 7 regressions in code review before they reached the staging environment}
+    \resumeItemListEnd
+\resumeSubHeadingListEnd
+\section{PROJECTS}
+\resumeSubHeadingListStart
+  \resumeProject
+    {\link{https://github.com/jordanrivera-example/trailcast}{TrailCast} \textbar{} \emph{Python, FastAPI, PostgreSQL, Redis, Docker, GitHub Actions}}{}
+    \resumeItemListStart
+      \resumeItem{Launched a trail-conditions API that merges 3 public weather feeds and 1.2K ranger reports into one PostgreSQL database, serving 900 weekly requests from a FastAPI backend on a \$7 server}
+      \resumeItem{Cut average response time from 480ms to 95ms by caching forecast lookups in Redis with a 15-minute expiry, measured across 10K replayed requests from production access logs}
+      \resumeItem{Automated deploys with Docker and a GitHub Actions pipeline that ran 140 pytest tests on every push, taking a release from 12 manual steps down to 1 merged pull request}
+      % \resumeItem{Validated every incoming ranger report against a JSON schema before saving it, rejecting 310 malformed rows in the first import and keeping the public map free of broken entries}
+    \resumeItemListEnd
+  \resumeProject
+    {\link{https://github.com/jordanrivera-example/ledgerlite}{LedgerLite} \textbar{} \emph{TypeScript, React, Node.js, GraphQL, PostgreSQL, Jest}}{}
+    \resumeItemListStart
+      \resumeItem{Developed a budgeting web app in React and TypeScript with a GraphQL API on Node.js, supporting 5 account types and importing 3K bank transactions from CSV files in under 2 seconds}
+      \resumeItem{Designed a PostgreSQL schema of 9 tables with row-level checks on every transfer, so that 250 generated test ledgers balanced to the cent after 50K random transactions}
+      \resumeItem{Wrote 120 Jest tests covering the import and reconciliation paths, which exposed 6 rounding defects in currency conversion before the first public release}
+    \resumeItemListEnd
+  \resumeProject
+    {\link{https://github.com/jordanrivera-example/docsearch}{DocSearch} \textbar{} \emph{Python, LangChain, RAG, pgvector, OpenAI API, PostgreSQL}}{}
+    \resumeItemListStart
+      \resumeItem{Created a retrieval tool over 4K pages of course notes using LangChain and pgvector, answering study questions with links to the source page in about 3 seconds per query}
+      \resumeItem{Improved answer relevance from 0.52 to 0.71 MRR on 150 labeled questions by combining PostgreSQL full-text search with vector search and reranking the top 20 results}
+      \resumeItem{Reduced OpenAI API spend 64\% by caching embeddings for unchanged pages and sending only the 5 closest passages to the model, tracked over 2K logged queries}
+    \resumeItemListEnd
+  \resumeProject
+    {\link{https://github.com/jordanrivera-example/queuewatch}{QueueWatch} \textbar{} \emph{Go, Kubernetes, Prometheus, Grafana, Terraform, GCP}}{}
+    \resumeItemListStart
+      \resumeItem{Deployed a Go job runner to Kubernetes on GCP with Terraform, scaling workers on queue depth and processing 80K jobs per day across 3 node pools during load tests}
+      \resumeItem{Instrumented the runner with Prometheus metrics and 4 Grafana dashboards, which traced a memory leak to an unclosed channel and cut pod restarts from 22 per day to 0}
+      \resumeItem{Enforced graceful shutdown with a 30-second drain window, so that 500 in-flight jobs finished during rolling updates with no lost or repeated work}
+    \resumeItemListEnd
+  \resumeProject
+    {\link{https://github.com/jordanrivera-example/pixelsort}{PixelSort} \textbar{} \emph{JavaScript, HTML, CSS, Vite}}{}
+    \resumeItemListStart
+      \resumeItem{Built a browser game in plain JavaScript and Vite that teaches 6 sorting algorithms through animation, reaching 1.5K plays in the first month after a campus newsletter feature}
+      \resumeItem{Tuned canvas rendering to hold 60 frames per second on 5-year-old phones by drawing only changed bars, measured with the Chrome performance panel on 3 test devices}
+      \resumeItem{Met WCAG 2.1 AA contrast on all 18 color pairs and added full keyboard control, verified with an automated audit and 2 rounds of screen-reader testing}
+    \resumeItemListEnd
+\resumeSubHeadingListEnd
+\end{document}

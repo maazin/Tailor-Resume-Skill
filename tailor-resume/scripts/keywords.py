@@ -129,6 +129,8 @@ def _master_text(master: dict[str, Any]) -> str:
     for kind in ("workExperience", "personalProjects"):
         for entry in master.get(kind) or []:
             parts.extend(str(b) for b in entry.get("alternates") or [])
+    # Completed courses from the coursework bank count as things the master has.
+    parts.extend(str(c.get("name", "")) for c in master.get("courseworkBank") or [])
     return " \n ".join(parts)
 
 

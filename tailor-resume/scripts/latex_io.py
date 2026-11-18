@@ -43,6 +43,7 @@ from common import (
     entry_id,
     entry_name,
     find_master_entry,
+    format_date_range,
     load_json,
     master_bullets,
     normalize_term,
@@ -289,14 +290,19 @@ _LOCATION_RE = re.compile(r"^(?:Relocating to\s+)?[A-Z][A-Za-z .'\u2019-]+,\s*[A
 
 
 def _parse_header(block: str) -> tuple[dict[str, str], dict[str, Any]]:
+    breaks = re.findall(r"\\\\(\[[^\]]*\])?", block)
     rows = [r.strip() for r in re.split(r"\\\\(?:\[[^\]]*\])?", block) if r.strip()]
     if not rows:
         raise LatexFormatError("the header center block is empty")
     name_raw = re.sub(r"\\vspace\*?\{[^}]*\}", "", rows[0]).strip()
     info: dict[str, str] = {"name": detex(name_raw)}
     title = ""
+    title_size = r"\small"
     if len(rows) >= 3:
-        title = detex(re.sub(r"\\vspace\*?\{[^}]*\}", "", rows[1]))
+        title_raw = re.sub(r"\\vspace\*?\{[^}]*\}", "", rows[1]).strip()
+        title = detex(title_raw)
+        found_size = re.search(r"\\(tiny|scriptsize|footnotesize|small|normalsize|large)(?![A-Za-z])", title_raw)
+        title_size = "\\" + found_size.group(1) if found_size else ""
     contact_row = re.sub(r"\\vspace\*?\{[^}]*\}", "", rows[-1] if len(rows) > 1 else "").strip()
     size = re.match(r"\\(tiny|scriptsize|footnotesize|small|normalsize|large)(?![A-Za-z])\s*", contact_row)
     size_cmd = size.group(0).strip() if size else ""
@@ -337,6 +343,9 @@ def _parse_header(block: str) -> tuple[dict[str, str], dict[str, Any]]:
         "separator": separator,
         "items": items,
         "contact_order": order,
+        "title_size": title_size,
+        "name_break": breaks[0] if breaks else "[2pt]",
+        "title_break": breaks[1] if len(breaks) > 1 else (breaks[0] if breaks else "[2pt]"),
     }
     return info, header
 
@@ -393,6 +402,72 @@ def _parse_skills(section_body: str) -> list[dict[str, Any]]:
     return groups
 
 
+_COURSEWORK_LINE = re.compile(r"^((?:Relevant |Selected |Related )?Coursework)\s*:\s*(.+)$", re.IGNORECASE)
+_BANK_LINE = re.compile(
+    r"^\s*%+\s*(?P<group>[^:%\n]+?)\s*:\s*(?P<code>[A-Z]{2,4}\s?\d{3,4}[A-Z]?)\s+(?P<name>[^;\n]+?)\s*;"
+    r"\s*(?P<term>[^;\n]+?)\s*;\s*grade\s+(?P<grade>[A-F][+-]?|P|S)\s*\.?\s*$",
+    re.MULTILINE,
+)
+
+
+def split_coursework(text: str) -> tuple[str, list[str]]:
+    """ "Relevant Coursework: A, B, C" -> ("Relevant Coursework", ["A", "B", "C"])."""
+    match = _COURSEWORK_LINE.match(text.strip())
+    if not match:
+        return "", []
+    return match.group(1), [c.strip() for c in split_top_level(match.group(2)) if c.strip()]
+
+
+def parse_coursework_bank(raw_body: str) -> list[dict[str, str]]:
+    """Completed courses listed in comments as
+    "% Group: CODE 1234 Course Name; Term; grade A." (any section of the file)."""
+    return [
+        {key: match.group(key).strip() for key in ("group", "code", "name", "term", "grade")}
+        for match in _BANK_LINE.finditer(raw_body)
+    ]
+
+
+def template_lengths(preamble: str) -> dict[str, float]:
+    """The master's own \\entrygap and \\sectiongap, in points: the page fill never goes below them."""
+    out = {"entrygap": DEFAULT_ENTRYGAP_PT, "sectiongap": DEFAULT_SECTIONGAP_PT}
+    for name in out:
+        found = re.search(r"\\setlength\s*\{\\" + name + r"\}\s*\{\s*([\d.]+)\s*pt\s*\}", preamble)
+        if found:
+            out[name] = float(found.group(1))
+    return out
+
+
+def is_ragged_right(preamble: str) -> bool:
+    """True when the body text is set ragged right (a global \\raggedright)."""
+    live = "\n".join(re.sub(r"(?<!\\)%.*$", "", line) for line in preamble.split("\n"))
+    live = re.sub(r"\\titleformat\s*\{\\section\}\{[^\n]*", "", live)
+    return bool(re.search(r"\\raggedright(?![A-Za-z])", live))
+
+
+_ORDER_FIELDS = {"1": "company", "2": "location", "3": "title", "4": "years"}
+
+
+def _subheading_order(preamble: str) -> list[str]:
+    """Order the work heading prints its fields, read from \\resumeSubheading.
+
+    Uses the last place each argument appears, so an education branch at the
+    start of the macro does not count. Default: role, organization, location, dates.
+    """
+    match = re.search(r"\\newcommand\{\\resumeSubheading\}\[4\]\{", preamble)
+    if not match:
+        return ["title", "company", "location", "years"]
+    try:
+        body, _ = read_group(preamble, match.end() - 1)
+    except LatexFormatError:
+        return ["title", "company", "location", "years"]
+    last: dict[str, int] = {}
+    for found in re.finditer(r"#([1-4])", body):
+        last[found.group(1)] = found.start()
+    if len(last) < 4:
+        return ["title", "company", "location", "years"]
+    return [_ORDER_FIELDS[n] for n, _ in sorted(last.items(), key=lambda kv: kv[1])]
+
+
 def read_tex_string(tex: str) -> dict[str, Any]:
     preamble, raw_body = split_document(tex)
     body = _prepare_body(raw_body)
@@ -429,8 +504,13 @@ def read_tex_string(tex: str) -> dict[str, Any]:
         "sections": [],
         "project_macro": "resumeProject",
         "education_macro": "resumeSubheading",
+        "spacing": template_lengths(preamble),
         "project_heading": {"separator": r"$\vert$", "link": "link" if r"\newcommand{\link}" in preamble else "href"},
         "skills_begin": r"\begin{itemize}[leftmargin=0.15in,label={},topsep=3pt,parsep=0pt]",
+        "skills_item": r"\small\item",
+        "work_order": _subheading_order(preamble),
+        "education_heading_lines": 2 if r"\newcommand{\educationheading}" in preamble else 1,
+        "ragged_right": is_ragged_right(preamble),
     }
 
     section_matches = list(re.finditer(r"\\section\*?\s*\{", body))
@@ -455,6 +535,9 @@ def read_tex_string(tex: str) -> dict[str, Any]:
             begin = re.search(r"\\begin\{itemize\}(?:\[[^\]]*\])?", section_body)
             if begin:
                 template["skills_begin"] = begin.group(0)
+            item = re.search(r"(\\(?:small|footnotesize|normalsize)\s*)?\\item(?![A-Za-z])", section_body)
+            if item:
+                template["skills_item"] = (item.group(1) or "").strip() + r"\item"
             continue
 
         current: dict[str, Any] | None = None
@@ -511,6 +594,13 @@ def read_tex_string(tex: str) -> dict[str, Any]:
     for required in ("workExperience", "additional"):
         if not any(meta["key"] == required for meta in resume["sectionMeta"]):
             raise LatexFormatError(f"no {'experience' if required == 'workExperience' else 'skills'} section found")
+    for entry in resume["education"]:
+        for text in entry.get("description") or []:
+            label, courses = split_coursework(text)
+            if label:
+                entry["coursework"] = courses
+                entry["coursework_label"] = label
+    resume["courseworkBank"] = parse_coursework_bank(raw_body)
     resume["_template"] = template
     return resume
 
@@ -574,11 +664,12 @@ def template_findings(tex: str) -> list[Finding]:
         bool(sub) and "tabular" not in (sub.group(1) if sub else "tabular") and r"\hfill" not in (sub.group(1) if sub else ""),
         "D12", r"\resumeSubheading must print role, organization, location and dates on one line (no tabular, no \hfill)",
     )
-    outside_titles = re.sub(r"\\titleformat\s*\{\\section\}\{[^\n]*", "", live_preamble)
     need(
-        not re.search(r"\\raggedright(?![A-Za-z])", outside_titles),
-        "L14", r"body text must be justified so wrapped lines end at the right margin: remove the global "
-        r"\raggedright and set \hyphenpenalty=10000 so words are not split",
+        not is_ragged_right(preamble),
+        "L14", r"body text is ragged right, so the right margin looks wider than the left (a career-coach "
+        r"check flagged this). To justify it: remove the global \raggedright and add \hyphenpenalty=10000, "
+        r"\exhyphenpenalty=10000 and \emergencystretch=3em",
+        "warn",
     )
     need(
         not re.search(r"\\[Nn]eedspace", live_preamble + live_body),
@@ -631,6 +722,16 @@ def merge_tailored(
         if key in overrides and overrides[key] is not None:
             resume["personalInfo"][key] = str(overrides[key]).strip()
 
+    for entry in resume["education"]:
+        entry["years"] = format_date_range(str(entry.get("years") or ""))
+    if tailored.get("coursework") is not None and resume["education"]:
+        school = resume["education"][0]
+        label = school.get("coursework_label") or "Relevant Coursework"
+        courses = [str(c).strip() for c in tailored.get("coursework") or [] if str(c).strip()]
+        others = [d for d in school.get("description") or [] if not split_coursework(d)[0]]
+        school["description"] = ([f"{label}: {', '.join(courses)}"] if courses else []) + others
+        school["coursework"] = courses
+
     groups = tailored.get("skillGroups")
     if groups is None:
         groups = master.get("skillGroups") or []
@@ -654,6 +755,8 @@ def merge_tailored(
                     if not merged.get(key):
                         merged[key] = copy.deepcopy(source.get(key) or ([] if key == "stack" else ""))
             merged["description"] = [str(b).strip() for b in merged.get("description") or [] if str(b).strip()]
+            if merged.get("years"):
+                merged["years"] = format_date_range(str(merged["years"]))
             resume[kind].append(merged)
     return resume
 
@@ -701,9 +804,13 @@ def _write_preamble(resume: dict[str, Any], entrygap: float | None, sectiongap: 
 def _write_header(resume: dict[str, Any]) -> list[str]:
     info = resume["personalInfo"]
     header = resume["_template"]["header"]
-    lines = [r"\begin{center}", f"  {header['name_raw']} \\\\[2pt]"]
+    name_break = header.get("name_break", "[2pt]")
+    title_break = header.get("title_break", "[2pt]")
+    lines = [r"\begin{center}", f"  {header['name_raw']} \\\\{name_break}"]
     if info.get("title"):
-        lines.append(f"  {{\\small {entex(info['title'])}}} \\\\[2pt]")
+        size = header.get("title_size", r"\small")
+        title = entex(info["title"])
+        lines.append(f"  {{{size} {title}}} \\\\{title_break}" if size else f"  {title} \\\\{title_break}")
     if header.get("size_cmd"):
         lines.append(f"  {header['size_cmd']}")
     raw_by_kind = {item["kind"]: item["raw"] for item in header["items"]}
@@ -720,12 +827,20 @@ def _write_header(resume: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _write_items(entry: dict[str, Any]) -> list[str]:
+def _write_item_text(text: str, bold_label: bool) -> str:
+    if bold_label:
+        match = re.match(r"^([A-Z][A-Za-z &/]{2,40}):\s+(.*)$", text)
+        if match:
+            return f"\\textbf{{{entex(match.group(1))}:}} {entex(match.group(2))}"
+    return entex(text)
+
+
+def _write_items(entry: dict[str, Any], bold_label: bool = False) -> list[str]:
     bullets = entry.get("description") or []
     if not bullets:
         return []
     lines = [r"    \resumeItemListStart"]
-    lines += [f"      \\resumeItem{{{entex(b)}}}" for b in bullets]
+    lines += [f"      \\resumeItem{{{_write_item_text(b, bold_label)}}}" for b in bullets]
     lines.append(r"    \resumeItemListEnd")
     return lines
 
@@ -736,7 +851,7 @@ def _write_section(resume: dict[str, Any], section: dict[str, Any]) -> list[str]
     lines = [f"\\section{{{section['title_raw']}}}"]
     if key == "additional":
         lines.append(template["skills_begin"])
-        lines.append(r"  \small\item")
+        lines.append("  " + template.get("skills_item", r"\small\item"))
         rows = [
             f"    \\textbf{{{entex(g['label'])}:}} {', '.join(entex(i) for i in g['items'])}"
             for g in resume["skillGroups"]
@@ -765,14 +880,14 @@ def _write_section(resume: dict[str, Any], section: dict[str, Any]) -> list[str]
                 lines.append(r"  \resumeEducation")
                 lines.append(f"    {{{entex(entry.get('institution', ''))}}}{{{entex(entry.get('degree', ''))}}}")
                 lines.append(f"    {{{entex(entry.get('gpa', ''))}}}{{{entex(entry.get('years', ''))}}}")
-                lines += _write_items(entry)
+                lines += _write_items(entry, bold_label=True)
                 continue
             org = entry.get("institution" if key == "education" else "company", "")
             role = entry.get("degree" if key == "education" else "title", "")
             lines.append(r"  \resumeSubheading")
             lines.append(f"    {{{entex(org)}}}{{{entex(entry.get('location', ''))}}}")
             lines.append(f"    {{{entex(role)}}}{{{entex(entry.get('years', ''))}}}")
-        lines += _write_items(entry)
+        lines += _write_items(entry, bold_label=key == "education")
     lines.append(r"\resumeSubHeadingListEnd")
     return lines
 

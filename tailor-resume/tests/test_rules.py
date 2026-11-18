@@ -41,7 +41,9 @@ def test_planted_violation_is_caught(case, tailored, job, master):
 def test_every_rule_has_a_planted_case():
     covered = {c["rule"] for c in CASES}
     wanted = {f"F{i}" for i in range(1, 10)} | {f"W{i}" for i in range(1, 11)}
-    wanted |= {f"C{i}" for i in range(1, 15)} - {"C9"}  # C9 is checked by C8's test
+    # C9 is checked by C8's test. C14 cannot be planted through tailored.json because dates
+    # are rewritten in the house style on merge; test_dates_use_full_month_names covers it.
+    wanted |= {f"C{i}" for i in range(1, 15)} - {"C9", "C14"}
     assert wanted <= covered, sorted(wanted - covered)
 
 
@@ -155,7 +157,7 @@ def test_relocating_line(locations, workplace, home, line, rule):
         ("Master of Business Administration", []),
         ("Bachelor of Science", ["block"]),
         ("B.S.", ["block"]),
-        ("Bachelor of Science in Computer Science, Example Honors College, GPA: 3.9/4.0", ["block", "warn"]),
+        ("Bachelor of Science in Computer Science, Example Honors College, GPA: 3.9/4.0", ["warn", "warn"]),
     ],
 )
 def test_education_line_names_a_major(degree, severities, master, tailored, job):
@@ -170,5 +172,6 @@ def test_dates_use_full_month_names(resume):
     from format_check import check_dates
 
     assert check_dates(resume) == []
-    resume["workExperience"][0]["years"] = "May 2025 – Aug 2025"
-    assert "C14" in rules(check_dates(resume))
+    for bad in ("May 2025 \u2013 Aug 2025", "May 2025 - August 2025", "05/2025 \u2013 08/2025"):
+        resume["workExperience"][0]["years"] = bad
+        assert "C14" in rules(check_dates(resume)), bad

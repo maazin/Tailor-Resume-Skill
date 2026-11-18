@@ -93,6 +93,7 @@ Read the writing and content rules in `references/prompts.md` again, then write 
 - N is 3 bullets per entry. Use 4 only when every entry shown has 4 bullets scoring 60 or more and the page still fits.
 - Keep the N best picks per entry. Reword toward the posting's terms where the meaning holds. Each bullet stays inside its own master entry.
 - Reorder skill groups and items by relevance. Drop skills to keep each group on one line. Add only confirmed skills.
+- Coursework: if the master has a "Relevant Coursework" line or a coursework bank (comment lines like `% Data / AI: COP 4710 Database Design; Spring 2025; grade A-.`), set `coursework` to the 3 to 5 courses most relevant to the posting, copied exactly as the bank names them. The line must fit on one printed line. Leave `coursework` out to keep the master's line.
 
 ### 6. Header
 
@@ -146,7 +147,7 @@ If the tailored ATS score is lower than the baseline, say why (the report explai
 | `latex_io.py` | `read`, `bullets`, `validate`, `baseline`, `write` for `.tex` files |
 | `keywords.py` | `gaps`, `match`, `confirm` |
 | `select_bullets.py` | Sub-scores to a ranked selection |
-| `fact_gate.py` | F1 to F9 |
+| `fact_gate.py` | F1 to F10 |
 | `format_check.py` | C1 to C15 |
 | `style_check.py` | W1 to W10 |
 | `compile.py` | pdflatex and page count |

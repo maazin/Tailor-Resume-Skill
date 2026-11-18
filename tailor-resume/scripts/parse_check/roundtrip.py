@@ -38,6 +38,9 @@ ENTRY_ORDER: dict[str, tuple[str, ...]] = {
 }
 # Education written with \\resumeSubheading prints like a job: degree first.
 SUBHEADING_EDUCATION_ORDER = ("degree", "institution", "location", "years")
+# A two-row education heading (school | location, then degree | dates).
+TWO_ROW_EDUCATION_ORDER = ("institution", "location", "degree", "years")
+_WORK_TO_EDUCATION = {"company": "institution", "title": "degree", "location": "location", "years": "years"}
 DEFAULT_SECTIONS = ("education", "additional", "workExperience", "personalProjects")
 
 
@@ -70,13 +73,24 @@ def _entry_fields(
     return out
 
 
-def _section_fields(key: str, data: dict[str, Any], education_macro: str = "") -> list[Field]:
+def _section_fields(
+    key: str, data: dict[str, Any], education_macro: str = "", template: dict[str, Any] | None = None
+) -> list[Field]:
+    template = template or {}
     if key == "summary":
         return [("summary", data.get("summary") or "")]
     if key in ENTRY_ORDER:
         order = ENTRY_ORDER[key]
+        work_order = tuple(template.get("work_order") or ())
+        if key == "workExperience" and len(work_order) == 4:
+            order = work_order
         if key == "education" and education_macro != "resumeEducation":
-            order = SUBHEADING_EDUCATION_ORDER
+            if template.get("education_heading_lines", 1) > 1:
+                order = TWO_ROW_EDUCATION_ORDER
+            elif len(work_order) == 4:
+                order = tuple(_WORK_TO_EDUCATION[f] for f in work_order)
+            else:
+                order = SUBHEADING_EDUCATION_ORDER
         return [
             f
             for i, e in enumerate(data.get(key) or [])
@@ -95,6 +109,7 @@ def expected_fields(
     data: dict[str, Any],
     contact_order: tuple[str, ...] | None = None,
     education_macro: str = "",
+    template: dict[str, Any] | None = None,
 ) -> tuple[list[Field], list[str]]:
     """Fields in render order, plus the keys of hidden sections."""
     info = data.get("personalInfo") or {}
@@ -114,7 +129,7 @@ def expected_fields(
         if not meta.get("isVisible", True):
             hidden.append(key)
             continue
-        fields.extend(_section_fields(key, data, education_macro))
+        fields.extend(_section_fields(key, data, education_macro, template))
     return [(name, text) for name, text in fields if tokens(text)], hidden
 
 
@@ -253,7 +268,9 @@ def kendall_fidelity(positions: list[int]) -> float:
 def compute_roundtrip(data: dict[str, Any], extracted_text: str) -> RoundTrip:
     template = data.get("_template") or {}
     contact_order = tuple(template.get("contact_order") or ()) or None
-    fields, hidden = expected_fields(page_view(data), contact_order, template.get("education_macro", ""))
+    fields, hidden = expected_fields(
+        page_view(data), contact_order, template.get("education_macro", ""), template
+    )
     truncated = len(fields) > MAX_FIELDS
     fields = fields[:MAX_FIELDS]
     doc_tokens = tokens(extracted_text)

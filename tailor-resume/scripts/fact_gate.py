@@ -13,6 +13,8 @@ critical finding blocks compiling; a warning goes in the report.
   F7 same bullet count everywhere, at least 3         critical
   F8 every master work entry present, newest first    warning
   F9 no "built" where the master only shows "used"    warning
+  F10 every course shown is in the master's coursework
+      line or its coursework bank                     critical
 
 F1 and F2 reuse Resume-Matcher's validate_master_alignment (Apache-2.0, see
 keywords.py). F3, F4, F6, F8 and F9 are rules taken from career-ops (MIT:
@@ -284,6 +286,27 @@ def check_structure(resume: dict[str, Any], master: dict[str, Any]) -> list[Find
     return findings
 
 
+def check_coursework(resume: dict[str, Any], master: dict[str, Any]) -> list[Finding]:
+    """F10: courses come from the master's coursework line or its coursework bank."""
+    known: set[str] = set()
+    for entry in master.get("education") or []:
+        known.update(normalize_term(c) for c in entry.get("coursework") or [])
+    for course in master.get("courseworkBank") or []:
+        known.add(normalize_term(course.get("name", "")))
+        known.add(normalize_term(f"{course.get('code', '')} {course.get('name', '')}"))
+    findings: list[Finding] = []
+    for entry in resume.get("education") or []:
+        for course in entry.get("coursework") or []:
+            if normalize_term(course) not in known:
+                findings.append(
+                    Finding("F10", "critical",
+                            f"course '{course}' is not in the master's coursework line or coursework bank; "
+                            "use the course name exactly as the bank lists it",
+                            where=str(entry.get("institution", "education")), value=course)
+                )
+    return findings
+
+
 def run_fact_gate(
     resume: dict[str, Any],
     master: dict[str, Any],
@@ -298,6 +321,7 @@ def run_fact_gate(
         check_skills_and_names(resume, master, confirmed)
         + check_entry_facts(resume, master, vocabulary, posting_text)
         + check_structure(resume, master)
+        + check_coursework(resume, master)
     )
 
 

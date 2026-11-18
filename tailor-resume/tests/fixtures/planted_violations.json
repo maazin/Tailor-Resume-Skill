@@ -1,48 +1,544 @@
 {
   "_note": "One planted violation per rule. Each case edits the passing sample (sample_tailored.json or sample_job.json) and names the rule that must catch it. Ops: set, replace (find/replace in one string), replace_everywhere, delete, append, truncate_all.",
   "cases": [
-    {"rule": "F1", "check": "fact", "what": "an unconfirmed skill", "edits": [{"file": "tailored", "op": "append", "path": "skillGroups.0.items", "value": "Snowflake"}]},
-    {"rule": "F2", "check": "fact", "what": "a made-up employer", "edits": [{"file": "tailored", "op": "set", "path": "workExperience.0.company", "value": "Initech Data"}]},
-    {"rule": "F3", "check": "fact", "what": "a made-up number", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "2M+", "value": "5M+"}]},
-    {"rule": "F4", "check": "fact", "what": "a tool moved into the wrong entry", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.1.description.1", "find": "Wrote a FastAPI service", "value": "Wrote a FastAPI and Airflow service"}]},
-    {"rule": "F5", "check": "fact", "what": "a changed date", "edits": [{"file": "tailored", "op": "set", "path": "workExperience.0.years", "value": "Jan 2025 – Aug 2025"}]},
-    {"rule": "F6", "check": "fact", "what": "an upgraded job title", "edits": [{"file": "tailored", "op": "set", "path": "workExperience.0.title", "value": "Senior Data Engineer"}]},
-    {"rule": "F7", "check": "fact", "what": "uneven bullet counts", "edits": [{"file": "tailored", "op": "delete", "path": "personalProjects.0.description.2"}]},
-    {"rule": "F8", "check": "fact", "what": "a missing work entry", "edits": [{"file": "tailored", "op": "delete", "path": "workExperience.2"}]},
-    {"rule": "F9", "check": "fact", "what": "built where the master says tracked", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.1.description.2", "find": "Tracked 60", "value": "Built 60"}]},
-
-    {"rule": "C1", "check": "format", "what": "a job title that is not the posting's", "edits": [{"file": "tailored", "op": "set", "path": "personalInfo.title", "value": "Data Engineer"}]},
-    {"rule": "C2", "check": "format", "what": "no relocating line on a one-city posting", "edits": [{"file": "tailored", "op": "set", "path": "personalInfo.location", "value": "Denver, CO"}]},
-    {"rule": "C3", "check": "format", "what": "a relocating line on a multi-city posting", "edits": [{"file": "job", "op": "set", "path": "locations", "value": ["Austin, TX", "Chicago, IL"]}]},
-    {"rule": "C4", "check": "format", "what": "a relocating line to the city the user lives in", "edits": [{"file": "job", "op": "set", "path": "locations", "value": ["Denver, CO"]}, {"file": "tailored", "op": "set", "path": "personalInfo.location", "value": "Relocating to Denver, CO"}]},
-    {"rule": "C5", "check": "format", "what": "one entry with fewer bullets", "edits": [{"file": "tailored", "op": "delete", "path": "workExperience.1.description.2"}]},
-    {"rule": "C6", "check": "format", "what": "2 bullets per entry", "edits": [{"file": "tailored", "op": "truncate_all", "value": 2}]},
-    {"rule": "C7", "check": "format", "what": "more bullets than the master has", "edits": [{"file": "tailored", "op": "append", "path": "workExperience.2.description", "value": "Mentored 2 new interns on the scheduling codebase during the final sprint of the summer"}]},
-    {"rule": "C8", "check": "format", "what": "a bullet that starts with a gerund", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "Built a nightly", "value": "Building a nightly"}]},
-    {"rule": "C8", "check": "format", "what": "present tense (C9 shares the check)", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "Built a nightly", "value": "Builds a nightly"}]},
-    {"rule": "C10", "check": "format", "what": "a final period", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "per week", "value": "per week."}]},
-    {"rule": "C10", "check": "format", "what": "a pronoun", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "for the finance team", "value": "for my finance team"}]},
-    {"rule": "C11", "check": "format", "what": "a one-line bullet", "edits": [{"file": "tailored", "op": "set", "path": "workExperience.2.description.1", "value": "Fixed a double-booking bug in the Node.js scheduling API"}]},
-    {"rule": "C12", "check": "format", "what": "a spelled-out number", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "6 vendor feeds", "value": "six vendor feeds"}]},
-    {"rule": "C12", "check": "format", "what": "thousands without K", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.1.description.0", "find": "18K", "value": "18,000"}]},
-    {"rule": "C13", "check": "format", "what": "a tool spelled differently from the posting", "edits": [{"file": "tailored", "op": "replace_everywhere", "find": "PostgreSQL", "value": "Postgres"}]},
-    {"rule": "C14", "check": "format", "what": "an abbreviated month and a hyphen", "edits": [{"file": "tailored", "op": "set", "path": "workExperience.0.years", "value": "May 2025 - Aug 2025"}]},
-    {"rule": "C14", "check": "format", "what": "abbreviated months with an en dash", "edits": [{"file": "tailored", "op": "set", "path": "workExperience.0.years", "value": "May 2025 \u2013 Aug 2025"}]},
-
-    {"rule": "W1", "check": "style", "what": "an em dash", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "PostgreSQL, cutting", "value": "PostgreSQL — cutting"}]},
-    {"rule": "W1", "check": "style", "what": "an en dash in a bullet", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "from 5 hours to 20 minutes", "value": "5 hours – 20 minutes"}]},
-    {"rule": "W2", "check": "style", "what": "a banned word in another form", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "Built a nightly", "value": "Leveraging a nightly"}]},
-    {"rule": "W2", "check": "style", "what": "a banned phrase", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "Built a nightly", "value": "Played a key role in a nightly"}]},
-    {"rule": "W3", "check": "style", "what": "two AI-style words in one bullet", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "Built a nightly", "value": "Built a comprehensive, streamlined nightly"}]},
-    {"rule": "W4", "check": "style", "what": "a tacked-on -ing clause", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "per week", "value": "per week, ensuring reliable loads"}]},
-    {"rule": "W5", "check": "style", "what": "nouns where verbs would do", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "Built a nightly ETL pipeline", "value": "Performed implementation, optimization and standardization of a nightly ETL pipeline"}]},
-    {"rule": "W6", "check": "style", "what": "a filler triad", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "per week", "value": "per week for scalability, reliability, and maintainability"}]},
-    {"rule": "W7", "check": "style", "what": "two bullets in one entry start with the same verb", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.1", "find": "Modeled 9", "value": "Built 9"}]},
-    {"rule": "W8", "check": "style", "what": "a hedge", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.2", "find": "Added 85", "value": "Helped add 85"}]},
-    {"rule": "W9", "check": "style", "what": "nothing concrete", "edits": [{"file": "tailored", "op": "set", "path": "workExperience.2.description.1", "value": "Improved overall system quality for the whole engineering team over the full length of the internship"}]},
-    {"rule": "W10", "check": "style", "what": "bold markup", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "Built a nightly", "value": "**Built** a nightly"}]},
-    {"rule": "W10", "check": "style", "what": "curly quotes", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "nightly ETL pipeline", "value": "nightly “ETL” pipeline"}]},
-
-    {"rule": "L12", "check": "layout_text", "what": "a tilde for about", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.2.description.1", "find": "about 15", "value": "~15"}]}
+    {
+      "rule": "F1",
+      "check": "fact",
+      "what": "an unconfirmed skill",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "append",
+          "path": "skillGroups.0.items",
+          "value": "Snowflake"
+        }
+      ]
+    },
+    {
+      "rule": "F2",
+      "check": "fact",
+      "what": "a made-up employer",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "set",
+          "path": "workExperience.0.company",
+          "value": "Initech Data"
+        }
+      ]
+    },
+    {
+      "rule": "F3",
+      "check": "fact",
+      "what": "a made-up number",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "2M+",
+          "value": "5M+"
+        }
+      ]
+    },
+    {
+      "rule": "F4",
+      "check": "fact",
+      "what": "a tool moved into the wrong entry",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.1.description.1",
+          "find": "Wrote a FastAPI service",
+          "value": "Wrote a FastAPI and Airflow service"
+        }
+      ]
+    },
+    {
+      "rule": "F5",
+      "check": "fact",
+      "what": "a changed date",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "set",
+          "path": "workExperience.0.years",
+          "value": "Jan 2025 – Aug 2025"
+        }
+      ]
+    },
+    {
+      "rule": "F6",
+      "check": "fact",
+      "what": "an upgraded job title",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "set",
+          "path": "workExperience.0.title",
+          "value": "Senior Data Engineer"
+        }
+      ]
+    },
+    {
+      "rule": "F7",
+      "check": "fact",
+      "what": "uneven bullet counts",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "delete",
+          "path": "personalProjects.0.description.2"
+        }
+      ]
+    },
+    {
+      "rule": "F8",
+      "check": "fact",
+      "what": "a missing work entry",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "delete",
+          "path": "workExperience.2"
+        }
+      ]
+    },
+    {
+      "rule": "F9",
+      "check": "fact",
+      "what": "built where the master says tracked",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.1.description.2",
+          "find": "Tracked 60",
+          "value": "Built 60"
+        }
+      ]
+    },
+    {
+      "rule": "F10",
+      "check": "fact",
+      "what": "a course that is not in the coursework bank",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "set",
+          "path": "coursework",
+          "value": [
+            "Data Structures",
+            "Quantum Computing"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "C1",
+      "check": "format",
+      "what": "a job title that is not the posting's",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "set",
+          "path": "personalInfo.title",
+          "value": "Data Engineer"
+        }
+      ]
+    },
+    {
+      "rule": "C2",
+      "check": "format",
+      "what": "no relocating line on a one-city posting",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "set",
+          "path": "personalInfo.location",
+          "value": "Denver, CO"
+        }
+      ]
+    },
+    {
+      "rule": "C3",
+      "check": "format",
+      "what": "a relocating line on a multi-city posting",
+      "edits": [
+        {
+          "file": "job",
+          "op": "set",
+          "path": "locations",
+          "value": [
+            "Austin, TX",
+            "Chicago, IL"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "C4",
+      "check": "format",
+      "what": "a relocating line to the city the user lives in",
+      "edits": [
+        {
+          "file": "job",
+          "op": "set",
+          "path": "locations",
+          "value": [
+            "Denver, CO"
+          ]
+        },
+        {
+          "file": "tailored",
+          "op": "set",
+          "path": "personalInfo.location",
+          "value": "Relocating to Denver, CO"
+        }
+      ]
+    },
+    {
+      "rule": "C5",
+      "check": "format",
+      "what": "one entry with fewer bullets",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "delete",
+          "path": "workExperience.1.description.2"
+        }
+      ]
+    },
+    {
+      "rule": "C6",
+      "check": "format",
+      "what": "2 bullets per entry",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "truncate_all",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "rule": "C7",
+      "check": "format",
+      "what": "more bullets than the master has",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "append",
+          "path": "workExperience.2.description",
+          "value": "Mentored 2 new interns on the scheduling codebase during the final sprint of the summer"
+        }
+      ]
+    },
+    {
+      "rule": "C8",
+      "check": "format",
+      "what": "a bullet that starts with a gerund",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "Built a nightly",
+          "value": "Building a nightly"
+        }
+      ]
+    },
+    {
+      "rule": "C8",
+      "check": "format",
+      "what": "present tense (C9 shares the check)",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "Built a nightly",
+          "value": "Builds a nightly"
+        }
+      ]
+    },
+    {
+      "rule": "C10",
+      "check": "format",
+      "what": "a final period",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "per week",
+          "value": "per week."
+        }
+      ]
+    },
+    {
+      "rule": "C10",
+      "check": "format",
+      "what": "a pronoun",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "for the finance team",
+          "value": "for my finance team"
+        }
+      ]
+    },
+    {
+      "rule": "C11",
+      "check": "format",
+      "what": "a one-line bullet",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "set",
+          "path": "workExperience.2.description.1",
+          "value": "Fixed a double-booking bug in the Node.js scheduling API"
+        }
+      ]
+    },
+    {
+      "rule": "C12",
+      "check": "format",
+      "what": "a spelled-out number",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "6 vendor feeds",
+          "value": "six vendor feeds"
+        }
+      ]
+    },
+    {
+      "rule": "C12",
+      "check": "format",
+      "what": "thousands without K",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.1.description.0",
+          "find": "18K",
+          "value": "18,000"
+        }
+      ]
+    },
+    {
+      "rule": "C13",
+      "check": "format",
+      "what": "a tool spelled differently from the posting",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace_everywhere",
+          "find": "PostgreSQL",
+          "value": "Postgres"
+        }
+      ]
+    },
+    {
+      "rule": "W1",
+      "check": "style",
+      "what": "an em dash",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "PostgreSQL, cutting",
+          "value": "PostgreSQL — cutting"
+        }
+      ]
+    },
+    {
+      "rule": "W1",
+      "check": "style",
+      "what": "an en dash in a bullet",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "from 5 hours to 20 minutes",
+          "value": "5 hours – 20 minutes"
+        }
+      ]
+    },
+    {
+      "rule": "W2",
+      "check": "style",
+      "what": "a banned word in another form",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "Built a nightly",
+          "value": "Leveraging a nightly"
+        }
+      ]
+    },
+    {
+      "rule": "W2",
+      "check": "style",
+      "what": "a banned phrase",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "Built a nightly",
+          "value": "Played a key role in a nightly"
+        }
+      ]
+    },
+    {
+      "rule": "W3",
+      "check": "style",
+      "what": "two AI-style words in one bullet",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "Built a nightly",
+          "value": "Built a comprehensive, streamlined nightly"
+        }
+      ]
+    },
+    {
+      "rule": "W4",
+      "check": "style",
+      "what": "a tacked-on -ing clause",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "per week",
+          "value": "per week, ensuring reliable loads"
+        }
+      ]
+    },
+    {
+      "rule": "W5",
+      "check": "style",
+      "what": "nouns where verbs would do",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "Built a nightly ETL pipeline",
+          "value": "Performed implementation, optimization and standardization of a nightly ETL pipeline"
+        }
+      ]
+    },
+    {
+      "rule": "W6",
+      "check": "style",
+      "what": "a filler triad",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "per week",
+          "value": "per week for scalability, reliability, and maintainability"
+        }
+      ]
+    },
+    {
+      "rule": "W7",
+      "check": "style",
+      "what": "two bullets in one entry start with the same verb",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.1",
+          "find": "Modeled 9",
+          "value": "Built 9"
+        }
+      ]
+    },
+    {
+      "rule": "W8",
+      "check": "style",
+      "what": "a hedge",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.2",
+          "find": "Added 85",
+          "value": "Helped add 85"
+        }
+      ]
+    },
+    {
+      "rule": "W9",
+      "check": "style",
+      "what": "nothing concrete",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "set",
+          "path": "workExperience.2.description.1",
+          "value": "Improved overall system quality for the whole engineering team over the full length of the internship"
+        }
+      ]
+    },
+    {
+      "rule": "W10",
+      "check": "style",
+      "what": "bold markup",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "Built a nightly",
+          "value": "**Built** a nightly"
+        }
+      ]
+    },
+    {
+      "rule": "W10",
+      "check": "style",
+      "what": "curly quotes",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.0.description.0",
+          "find": "nightly ETL pipeline",
+          "value": "nightly “ETL” pipeline"
+        }
+      ]
+    },
+    {
+      "rule": "L12",
+      "check": "layout_text",
+      "what": "a tilde for about",
+      "edits": [
+        {
+          "file": "tailored",
+          "op": "replace",
+          "path": "workExperience.2.description.1",
+          "find": "about 15",
+          "value": "~15"
+        }
+      ]
+    }
   ]
 }

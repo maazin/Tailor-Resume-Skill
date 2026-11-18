@@ -439,7 +439,9 @@ def check_education(resume: dict[str, Any]) -> list[Finding]:
             )
         if re.search(r"(?i)\bgpa\b|\d\.\d+\s*/\s*\d", degree):
             findings.append(
-                Finding("C15", "block", "the GPA is inside the degree text; give it its own field", where=where, value=degree)
+                Finding("C15", "warn",
+                        "the GPA is inside the degree text; ATS parsers read the major more reliably when the GPA "
+                        "has its own field. This comes from master.tex", where=where, value=degree)
             )
         if re.search(r"(?i)\b(?:college|honors|school of)\b", degree):
             findings.append(

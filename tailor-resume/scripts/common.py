@@ -110,7 +110,7 @@ def entry_source_text(kind: str, entry: dict[str, Any]) -> str:
 
 def page_view(resume: dict[str, Any]) -> dict[str, Any]:
     """The resume as it prints: no alternates, no template data, no source ids."""
-    hidden = {"alternates", "sources", "url", "links"}
+    hidden = {"alternates", "sources", "url", "links", "courseworkBank", "coursework", "coursework_label"}
 
     def strip(obj: Any) -> Any:
         if isinstance(obj, dict):

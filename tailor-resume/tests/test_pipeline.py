@@ -347,5 +347,5 @@ def test_template_check_flags_ragged_right(master_tex):
     from latex_io import template_findings
 
     ragged = master_tex.replace("\\linespread{0.99}\\selectfont", "\\raggedright\\linespread{0.99}\\selectfont", 1)
-    assert "L14" in rules(template_findings(ragged), "block")
+    assert "L14" in rules(template_findings(ragged), "warn")  # the master's choice: reported, not blocked
     assert "L14" not in rules(template_findings(master_tex))

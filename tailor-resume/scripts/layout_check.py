@@ -80,6 +80,7 @@ class BulletMeasure:
     lines: int
     last_line_fill: float
     chars: int
+    section: str = ""
 
 
 @dataclass
@@ -153,10 +154,24 @@ def pdf_lines(pdf_path: str | Path) -> tuple[list[list[Line]], list[tuple[float,
     for page in extract_pages(str(pdf_path), laparams=LAParams(all_texts=True)):
         found: list[Line] = []
         walk(page, found)
-        found.sort(key=lambda ln: (-round(ln.y1, 1), ln.x0))
-        pages.append(_merge_same_row(found))
+        pages.append(_merge_same_row(_rows_in_order(found)))
         sizes.append((page.width, page.height))
     return pages, sizes
+
+
+def _rows_in_order(lines: list[Line]) -> list[Line]:
+    """Top to bottom, then left to right. Text on one printed row can sit a
+    fraction of a point apart (a bold name and a roman city), so baselines
+    within 2pt count as one row."""
+    ordered: list[Line] = []
+    row: list[Line] = []
+    for line in sorted(lines, key=lambda ln: -ln.y0):
+        if row and abs(row[0].y0 - line.y0) >= 2.0:
+            ordered.extend(sorted(row, key=lambda ln: ln.x0))
+            row = []
+        row.append(line)
+    ordered.extend(sorted(row, key=lambda ln: ln.x0))
+    return ordered
 
 
 def _merge_same_row(lines: list[Line]) -> list[Line]:
@@ -175,18 +190,18 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip().casefold()
 
 
-def _expected_bullets(resume: dict[str, Any]) -> list[tuple[str, str]]:
-    """(where, text) for every bullet in the order the page prints them."""
+def _expected_bullets(resume: dict[str, Any]) -> list[tuple[str, str, str]]:
+    """(where, text, section) for every bullet in the order the page prints them."""
     order = [m["key"] for m in sorted(resume.get("sectionMeta") or [], key=lambda m: m.get("order", 0))]
     order = order or ["education", "workExperience", "personalProjects"]
-    out: list[tuple[str, str]] = []
+    out: list[tuple[str, str, str]] = []
     for key in order:
         if key not in ("education", *ENTRY_KINDS):
             continue
         for entry in resume.get(key) or []:
             name = entry.get("institution") if key == "education" else entry_name(key, entry)
             for index, text in enumerate(bullets(entry)):
-                out.append((f"{name} bullet {index + 1}", text))
+                out.append((f"{name} bullet {index + 1}", text, key))
     return out
 
 
@@ -218,13 +233,18 @@ def measure(pdf_path: str | Path, resume: dict[str, Any], geometry: Geometry | N
         if current is None:
             return
         index = len(result.bullets)
-        where, text = expected[index] if index < len(expected) else (f"bullet {index + 1}", current["text"])
+        where, text, section_key = (
+            expected[index] if index < len(expected) else (f"bullet {index + 1}", current["text"], "")
+        )
         text_x = current["text_x"]
         width = max(1.0, right_edge - text_x)
         last = current["last"]
         fill = 1.0 if current["lines"] == 1 else max(0.0, min(1.0, (last.x1 - text_x) / width))
         result.bullets.append(
-            BulletMeasure(where=where, text=text, lines=current["lines"], last_line_fill=round(fill, 3), chars=len(text))
+            BulletMeasure(
+                where=where, text=text, lines=current["lines"], last_line_fill=round(fill, 3),
+                chars=len(text), section=section_key,
+            )
         )
         # Every line but the last one wrapped; justified text ends it at the margin.
         for wrapped in current["wrapped"]:
@@ -371,10 +391,20 @@ def page_findings(measured: PageMeasure, resume: dict[str, Any]) -> list[Finding
     guide = measured.char_guide()
     aim = f" Aim for about {guide[0]} to {guide[1]} characters in this template." if guide else ""
 
+    template = resume.get("_template") or {}
+    # A ragged-right master is the user's choice: report it, don't block on it.
+    ragged = "warn" if template.get("ragged_right") else "block"
+    set_left, set_right = measured.margins_in.get("left"), measured.margins_in.get("right")
+    if set_left is not None and set_right is not None and abs(set_left - set_right) > MARGIN_MATCH_IN:
+        findings.append(
+            Finding("L14", "block",
+                    f"the template sets a {set_left:.2f} in left margin and a {set_right:.2f} in right margin; "
+                    "they must match", where="page", value=f"{set_left:.2f}/{set_right:.2f}")
+        )
     left, right = measured.text_margins_in.get("left"), measured.text_margins_in.get("right")
     if left is not None and right is not None and abs(left - right) > MARGIN_MATCH_IN:
         findings.append(
-            Finding("L14", "block",
+            Finding("L14", ragged,
                     f"text starts {left:.2f} in from the left edge but ends {right:.2f} in from the right edge; "
                     "the margins must match. Justify the body text so wrapped lines reach the right margin",
                     where="page", value=f"{left:.2f}/{right:.2f}")
@@ -382,7 +412,7 @@ def page_findings(measured: PageMeasure, resume: dict[str, Any]) -> list[Finding
     if measured.short_wraps:
         sample = ", ".join(f"{where} ({points}pt)" for where, points in measured.short_wraps[:4])
         findings.append(
-            Finding("L14", "block",
+            Finding("L14", ragged,
                     f"{len(measured.short_wraps)} wrapped lines stop short of the right margin, so the right edge "
                     f"looks ragged: {sample}. The body text must be justified",
                     where="page", value=str(len(measured.short_wraps)))
@@ -448,6 +478,15 @@ def page_findings(measured: PageMeasure, resume: dict[str, Any]) -> list[Finding
             Finding("L6", "block", f"{measured.dash_bullets} bullets print with a dash instead of a round bullet", where="page")
         )
     for bullet in measured.bullets:
+        if bullet.section == "education":
+            if bullet.lines > 1:
+                findings.append(
+                    Finding("L3", "block",
+                            f"the education line prints on {bullet.lines} lines; it must fit on one. "
+                            "Drop the least relevant courses",
+                            where=bullet.where, value=bullet.text)
+                )
+            continue
         if bullet.lines != BULLET_LINES:
             findings.append(
                 Finding("L4", "block",
@@ -466,7 +505,8 @@ def page_findings(measured: PageMeasure, resume: dict[str, Any]) -> list[Finding
             )
 
     for heading in measured.headings:
-        if heading["lines"] > 1:
+        allowed = template.get("education_heading_lines", 1) if heading["section"] == "education" else 1
+        if heading["lines"] > allowed:
             is_project = heading["section"] == "personalProjects"
             findings.append(
                 Finding("L7" if is_project else "L2", "block" if is_project else "warn",
@@ -554,6 +594,12 @@ def fit(
     shared across \\entrygap (5 to 9pt) and \\sectiongap (8 to 12pt).
     Returns the result and the resume dict as written.
     """
+    spacing = (master.get("_template") or {}).get("spacing") or {}
+    base_entry = float(spacing.get("entrygap", DEFAULT_ENTRYGAP_PT))
+    base_section = float(spacing.get("sectiongap", DEFAULT_SECTIONGAP_PT))
+    # L10: spacing grows from the master's own values by up to 4pt; it never shrinks.
+    max_entry = max(MAX_ENTRYGAP_PT, base_entry + 4.0)
+    max_section = max(MAX_SECTIONGAP_PT, base_section + 4.0)
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     tex_path = out_dir / f"{stem}.tex"
@@ -580,7 +626,7 @@ def fit(
     gap: float | None = None
     try:
         for _ in range(MAX_CONTENT_PASSES + 1):
-            resume, compiled, gap = build(shown, DEFAULT_ENTRYGAP_PT, DEFAULT_SECTIONGAP_PT)
+            resume, compiled, gap = build(shown, base_entry, base_section)
             if not compiled.ok:
                 result.errors = compiled.errors
                 return result, resume
@@ -594,8 +640,8 @@ def fit(
                 shown -= 1
                 continue
             entry_gaps, sections = _gap_counts(resume)
-            absorb = (MAX_ENTRYGAP_PT - DEFAULT_ENTRYGAP_PT) * entry_gaps + (
-                MAX_SECTIONGAP_PT - DEFAULT_SECTIONGAP_PT
+            absorb = (max_entry - base_entry) * entry_gaps + (
+                max_section - base_section
             ) * sections
             result.log.append(f"{shown} projects: 1 page, {gap / INCH:.2f} in free before spreading")
             outcome[shown] = "fits"
@@ -609,17 +655,17 @@ def fit(
 
         # L10: share the leftover space across the two lengths.
         entry_gaps, sections = _gap_counts(resume)
-        entry_room = (MAX_ENTRYGAP_PT - DEFAULT_ENTRYGAP_PT) * entry_gaps
-        section_room = (MAX_SECTIONGAP_PT - DEFAULT_SECTIONGAP_PT) * sections
+        entry_room = (max_entry - base_entry) * entry_gaps
+        section_room = (max_section - base_section) * sections
         share = 0.0
         if gap and entry_room + section_room > 0:
             share = max(0.0, min(1.0, (gap - 1.0) / (entry_room + section_room)))
-        entrygap, sectiongap = DEFAULT_ENTRYGAP_PT, DEFAULT_SECTIONGAP_PT
+        entrygap, sectiongap = base_entry, base_section
         for _ in range(4):
             if share <= 0:
                 break
-            entrygap = DEFAULT_ENTRYGAP_PT + share * (MAX_ENTRYGAP_PT - DEFAULT_ENTRYGAP_PT)
-            sectiongap = DEFAULT_SECTIONGAP_PT + share * (MAX_SECTIONGAP_PT - DEFAULT_SECTIONGAP_PT)
+            entrygap = base_entry + share * (max_entry - base_entry)
+            sectiongap = base_section + share * (max_section - base_section)
             resume, compiled, gap = build(shown, entrygap, sectiongap)
             if compiled.ok and compiled.pages == 1:
                 break
@@ -627,7 +673,7 @@ def fit(
         else:
             share = 0.0
         if share <= 0:
-            entrygap, sectiongap = DEFAULT_ENTRYGAP_PT, DEFAULT_SECTIONGAP_PT
+            entrygap, sectiongap = base_entry, base_section
             resume, compiled, gap = build(shown, entrygap, sectiongap)
     except CompileError as exc:
         result.errors = [str(exc)]

@@ -393,6 +393,9 @@ def run(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     filtered, changes = remove_ai_phrases(
         {k: tailored.get(k) for k in ("personalInfo", "skillGroups", *ENTRY_KINDS) if k in tailored}
     )
+    # Course names are copied from the coursework bank as written (F10); never reword them.
+    if "coursework" in tailored:
+        filtered["coursework"] = tailored["coursework"]
     ctx["phrase_changes"] = changes
     dump_json(filtered, out_dir / "tailored.final.json")
 

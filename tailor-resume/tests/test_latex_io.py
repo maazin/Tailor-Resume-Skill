@@ -91,7 +91,7 @@ def test_reads_the_sample_master(master):
     assert [m["key"] for m in master["sectionMeta"]] == ["education", "additional", "workExperience", "personalProjects"]
     first = master["workExperience"][0]
     assert (first["company"], first["location"], first["title"], first["years"]) == (
-        "Northwind Analytics", "Denver, CO", "Data Engineering Intern", "May 2025 – Aug 2025",
+        "Northwind Analytics", "Denver, CO", "Data Engineering Intern", "May 2025 – August 2025",
     )
     assert len(first["description"]) == 3 and len(first["alternates"]) == 2
     project = master["personalProjects"][0]
@@ -198,7 +198,7 @@ def test_write_is_clean_and_keeps_the_preamble(master, master_tex, tailored):
     assert "%" not in body.replace(r"\%", "") and r"\vspace" not in body and "Needspace" not in tex
     assert "{\\small Data Engineer II}" in body and "Relocating to Austin, TX \\textbar{}" in body
     assert "on a single \\$7 server" in body and "93\\% accuracy" in body
-    assert "May 2025 -- Aug 2025" in body
+    assert "May 2025 -- August 2025" in body
     assert body.count(r"\resumeProject") == 3 and "LedgerLite" not in body
     # Only the two lengths and the PDF metadata differ from the master's preamble.
     from layout_check import _preamble_settings
@@ -206,10 +206,12 @@ def test_write_is_clean_and_keeps_the_preamble(master, master_tex, tailored):
 
 
 def test_merge_fills_dates_and_links_from_the_master(resume):
-    assert resume["workExperience"][0]["years"] == "May 2025 – Aug 2025"
+    assert resume["workExperience"][0]["years"] == "May 2025 – August 2025"
     assert resume["workExperience"][0]["title"] == "Data Engineering Intern"
     assert resume["personalProjects"][0]["url"].endswith("/trailcast")
     assert resume["education"][0]["institution"] == "Front Range University"
+    assert resume["education"][0]["degree"] == "Bachelor of Science in Computer Science"
+    assert resume["education"][0]["gpa"] == "GPA: 3.8/4.0"
     assert resume["personalInfo"]["email"] == "jordan.rivera@example.com"
 
 

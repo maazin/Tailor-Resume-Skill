@@ -238,7 +238,7 @@ def check_dashes(resume: dict[str, Any]) -> list[Finding]:
 
 
 _TEX_DATE_DASH = re.compile(
-    r"(?:[A-Z][a-z]{2}\.? )?(?:19|20)\d{2}\s*--\s*(?:(?:[A-Z][a-z]{2}\.? )?(?:19|20)\d{2}|Present)"
+    r"(?:[A-Z][a-z]{2,8}\.? )?(?:19|20)\d{2}\s*--\s*(?:(?:[A-Z][a-z]{2,8}\.? )?(?:19|20)\d{2}|Present)"
 )
 
 

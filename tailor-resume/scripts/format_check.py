@@ -1,4 +1,4 @@
-"""Resume content rules C1 to C14, checked in code.
+"""Resume content rules C1 to C15, checked in code.
 
 Header
   C1  the job title line is the posting's title, cleaned of req numbers,
@@ -16,7 +16,9 @@ Bullets
       layout_check.py measures the real page)
   C12 digits, with K for thousands and M for millions
   C13 tool names spelled the way the posting spells them
-  C14 dates as "Aug 2022 \u2013 May 2026", three-letter months, "Present"
+  C14 dates as "August 2022 \u2013 May 2026": full month names, "Present"
+  C15 education shows the school, the degree with its major, GPA in its own
+      field, and the dates; no college or honors-program names in the degree
 
 CLI:
   format_check.py --master master.tex --tailored tailored.json --job job.json
@@ -245,9 +247,9 @@ _NUMBER_WORDS = re.compile(
 _GROUPED = re.compile(r"(?<![\w.,])\d{1,3}(?:,\d{3})+(?![\d])")
 _LONG_BARE = re.compile(r"(?<![\w.,$#/-])\d{4,}(?![\w.,-]|\s?(?:px|ms|kb|mb|gb))", re.IGNORECASE)
 _LOWER_SUFFIX = re.compile(r"(?<![\w.])\d+(?:\.\d+)?\s?(?:k|m)\b(?!\w)")
+_FULL_MONTH = r"(?:January|February|March|April|May|June|July|August|September|October|November|December)"
 _DATE_OK = re.compile(
-    r"^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?:19|20)\d{2}"
-    r"(?: \u2013 (?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?:19|20)\d{2}|Present))?$"
+    rf"^{_FULL_MONTH} (?:19|20)\d{{2}}(?: \u2013 (?:{_FULL_MONTH} (?:19|20)\d{{2}}|Present))?$"
 )
 
 
@@ -395,10 +397,57 @@ def check_dates(resume: dict[str, Any]) -> list[Finding]:
             if years and not _DATE_OK.match(years):
                 findings.append(
                     Finding("C14", "block",
-                            f"dates '{years}' are not in the format 'Aug 2022 \u2013 May 2026' "
-                            "(three-letter months, an en dash, 'Present' for current)",
+                            f"dates '{years}' are not in the format 'August 2022 \u2013 May 2026' "
+                            "(full month names, an en dash, 'Present' for current). Abbreviations "
+                            "read as mixed styles next to 'May'",
                             where=str(entry.get(name_field, "")), value=years)
                 )
+    return findings
+
+
+_DEGREE_WORD = re.compile(
+    r"(?i)\b(?:bachelor|master|associate|doctor|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|ph\.?d\.?|mba|b\.?e\.?|b\.?tech)\b"
+)
+# A degree name that says nothing about the field: "Bachelor of Science", "B.S.",
+# "Bachelor's degree". "Master of Business Administration" names its field.
+_GENERIC_DEGREE = re.compile(
+    r"(?i)^\s*(?:(?:bachelor|master|associate|doctor)(?:'?s)?(?:\s+degree)?"
+    r"(?:\s+of\s+(?:science|arts|applied science|fine arts|engineering|technology))?"
+    r"|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|b\.?e\.?|b\.?tech|ph\.?d\.?)\s*$"
+)
+
+
+def check_education(resume: dict[str, Any]) -> list[Finding]:
+    """C15: an ATS must be able to read the school, the degree and the major."""
+    findings: list[Finding] = []
+    for entry in resume.get("education") or []:
+        school = str(entry.get("institution") or "").strip()
+        degree = str(entry.get("degree") or "").strip()
+        where = school or "education"
+        if not school:
+            findings.append(Finding("C15", "block", "the education entry has no school name", where=where))
+        if not _DEGREE_WORD.search(degree):
+            findings.append(
+                Finding("C15", "block", f"'{degree}' does not name a degree (Bachelor of Science, Master of Arts...)",
+                        where=where, value=degree)
+            )
+        elif _GENERIC_DEGREE.match(degree):
+            findings.append(
+                Finding("C15", "block",
+                        f"'{degree}' has no major an ATS can find; write it as 'Bachelor of Science in Computer Science'",
+                        where=where, value=degree)
+            )
+        if re.search(r"(?i)\bgpa\b|\d\.\d+\s*/\s*\d", degree):
+            findings.append(
+                Finding("C15", "block", "the GPA is inside the degree text; give it its own field", where=where, value=degree)
+            )
+        if re.search(r"(?i)\b(?:college|honors|school of)\b", degree):
+            findings.append(
+                Finding("C15", "warn",
+                        "the degree names a college or honors program; ATS parsers can read it as the school or "
+                        "the major. Keep only the degree and major unless it is a separate degree-granting school",
+                        where=where, value=degree)
+            )
     return findings
 
 
@@ -414,11 +463,12 @@ def run_format_check(
         + check_bullet_text(resume)
         + check_spelling(resume, job)
         + check_dates(resume)
+        + check_education(resume)
     )
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Content rules C1-C14.")
+    parser = argparse.ArgumentParser(description="Content rules C1-C15.")
     parser.add_argument("--master", required=True)
     parser.add_argument("--tailored", required=True)
     parser.add_argument("--job", required=True)

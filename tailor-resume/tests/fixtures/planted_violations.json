@@ -26,7 +26,8 @@
     {"rule": "C12", "check": "format", "what": "a spelled-out number", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "6 vendor feeds", "value": "six vendor feeds"}]},
     {"rule": "C12", "check": "format", "what": "thousands without K", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.1.description.0", "find": "18K", "value": "18,000"}]},
     {"rule": "C13", "check": "format", "what": "a tool spelled differently from the posting", "edits": [{"file": "tailored", "op": "replace_everywhere", "find": "PostgreSQL", "value": "Postgres"}]},
-    {"rule": "C14", "check": "format", "what": "a full month name and a hyphen", "edits": [{"file": "tailored", "op": "set", "path": "workExperience.0.years", "value": "May 2025 - August 2025"}]},
+    {"rule": "C14", "check": "format", "what": "an abbreviated month and a hyphen", "edits": [{"file": "tailored", "op": "set", "path": "workExperience.0.years", "value": "May 2025 - Aug 2025"}]},
+    {"rule": "C14", "check": "format", "what": "abbreviated months with an en dash", "edits": [{"file": "tailored", "op": "set", "path": "workExperience.0.years", "value": "May 2025 \u2013 Aug 2025"}]},
 
     {"rule": "W1", "check": "style", "what": "an em dash", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "PostgreSQL, cutting", "value": "PostgreSQL — cutting"}]},
     {"rule": "W1", "check": "style", "what": "an en dash in a bullet", "edits": [{"file": "tailored", "op": "replace", "path": "workExperience.0.description.0", "find": "from 5 hours to 20 minutes", "value": "5 hours – 20 minutes"}]},

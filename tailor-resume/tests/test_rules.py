@@ -145,3 +145,30 @@ def test_relocating_line(locations, workplace, home, line, rule):
     )
     assert (got_line, got_rule) == (line, rule)
     assert home_unknown == (not home and rule == "C2")
+
+
+@pytest.mark.parametrize(
+    "degree, severities",
+    [
+        ("Bachelor of Science in Computer Science", []),
+        ("Bachelor of Science, Computer Science", []),
+        ("Master of Business Administration", []),
+        ("Bachelor of Science", ["block"]),
+        ("B.S.", ["block"]),
+        ("Bachelor of Science in Computer Science, Example Honors College, GPA: 3.9/4.0", ["block", "warn"]),
+    ],
+)
+def test_education_line_names_a_major(degree, severities, master, tailored, job):
+    from format_check import check_education
+
+    master["education"][0]["degree"] = degree
+    resume = merge_tailored(tailored, master)
+    assert [f.severity for f in check_education(resume)] == severities
+
+
+def test_dates_use_full_month_names(resume):
+    from format_check import check_dates
+
+    assert check_dates(resume) == []
+    resume["workExperience"][0]["years"] = "May 2025 – Aug 2025"
+    assert "C14" in rules(check_dates(resume))

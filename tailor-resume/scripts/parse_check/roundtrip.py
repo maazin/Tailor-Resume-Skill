@@ -4,8 +4,9 @@ Modified from Resume-Matcher (https://github.com/srbhr/Resume-Matcher),
 apps/backend/app/services/ats_parse/roundtrip.py, Apache-2.0.
 Changes:
   - The per-template order tables for Resume-Matcher's own templates are
-    replaced by the one-line heading order this skill writes (D12): role,
-    organization, location, dates; project name, then tech stack.
+    replaced by the heading order this skill writes, each on one line: role,
+    organization, location, dates (D12); school, degree with major, GPA,
+    dates (C15); project name, then tech stack.
   - Contact order is read from the user's template (``_template.contact_order``).
   - Pydantic validation replaced by ``common.page_view``; condensed entries
     and custom sections removed (the skill has neither).
@@ -32,9 +33,11 @@ LINK_FIELDS = frozenset({"website", "linkedin", "github"})
 # Entry field order as the one-line heading prints it.
 ENTRY_ORDER: dict[str, tuple[str, ...]] = {
     "workExperience": ("title", "company", "location", "years"),
-    "education": ("degree", "institution", "location", "years"),
+    "education": ("institution", "degree", "gpa", "years"),
     "personalProjects": ("name", "stack", "years"),
 }
+# Education written with \\resumeSubheading prints like a job: degree first.
+SUBHEADING_EDUCATION_ORDER = ("degree", "institution", "location", "years")
 DEFAULT_SECTIONS = ("education", "additional", "workExperience", "personalProjects")
 
 
@@ -67,11 +70,13 @@ def _entry_fields(
     return out
 
 
-def _section_fields(key: str, data: dict[str, Any]) -> list[Field]:
+def _section_fields(key: str, data: dict[str, Any], education_macro: str = "") -> list[Field]:
     if key == "summary":
         return [("summary", data.get("summary") or "")]
     if key in ENTRY_ORDER:
         order = ENTRY_ORDER[key]
+        if key == "education" and education_macro != "resumeEducation":
+            order = SUBHEADING_EDUCATION_ORDER
         return [
             f
             for i, e in enumerate(data.get(key) or [])
@@ -87,7 +92,9 @@ def _section_fields(key: str, data: dict[str, Any]) -> list[Field]:
 
 
 def expected_fields(
-    data: dict[str, Any], contact_order: tuple[str, ...] | None = None
+    data: dict[str, Any],
+    contact_order: tuple[str, ...] | None = None,
+    education_macro: str = "",
 ) -> tuple[list[Field], list[str]]:
     """Fields in render order, plus the keys of hidden sections."""
     info = data.get("personalInfo") or {}
@@ -107,7 +114,7 @@ def expected_fields(
         if not meta.get("isVisible", True):
             hidden.append(key)
             continue
-        fields.extend(_section_fields(key, data))
+        fields.extend(_section_fields(key, data, education_macro))
     return [(name, text) for name, text in fields if tokens(text)], hidden
 
 
@@ -244,8 +251,9 @@ def kendall_fidelity(positions: list[int]) -> float:
 
 
 def compute_roundtrip(data: dict[str, Any], extracted_text: str) -> RoundTrip:
-    contact_order = tuple((data.get("_template") or {}).get("contact_order") or ()) or None
-    fields, hidden = expected_fields(page_view(data), contact_order)
+    template = data.get("_template") or {}
+    contact_order = tuple(template.get("contact_order") or ()) or None
+    fields, hidden = expected_fields(page_view(data), contact_order, template.get("education_macro", ""))
     truncated = len(fields) > MAX_FIELDS
     fields = fields[:MAX_FIELDS]
     doc_tokens = tokens(extracted_text)

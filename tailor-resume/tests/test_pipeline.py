@@ -111,7 +111,7 @@ def test_pdf_text_has_no_banned_phrase_or_em_dash(passing_run):
     # The only en dashes are in date ranges.
     for line in text.splitlines():
         if "\u2013" in line:
-            assert re.search(r"\d{4} \u2013 (?:[A-Z][a-z]{2} \d{4}|Present)", line), line
+            assert re.search(r"\d{4} \u2013 (?:[A-Z][a-z]{2,8} \d{4}|Present)", line), line
 
 
 def test_parse_check_passes_with_both_extractors(passing_run):
@@ -166,8 +166,8 @@ def test_report_has_every_section(passing_run):
     report = (out / "report.md").read_text(encoding="utf-8")
     for heading in ("## Scores", "### ATS sub-scores", "## Keyword coverage", "## Gaps", "## Page fill",
                     "## Bullets: before and after", "## AI-phrase filter", "## Check results",
-                    "### Fact gate (F1-F9)", "### Content rules (C1-C14)", "### Writing rules (W1-W10)",
-                    "### Layout rules (L1-L13)", "### Parse check: Tailored", "### Parse check: Baseline"):
+                    "### Fact gate (F1-F9)", "### Content rules (C1-C15)", "### Writing rules (W1-W10)",
+                    "### Layout rules (L1-L15)", "### Parse check: Tailored", "### Parse check: Baseline"):
         assert heading in report, heading
     assert "| ATS score /10 | 7.9 | 9.2 |" in report
     assert "| Recruiter read /10 | pending | pending |" in report
@@ -310,3 +310,42 @@ def test_recruiter_read_is_validated(tmp_path, passing_run):
     assert results["recruiter"]["tailored"]["score"] == 7
     assert results["recruiter"]["tailored"]["problems"] == ["criterion 4: the cited line is not on this page"]
     assert "| Recruiter read /10 | 1 | 7 |" in (tmp_path / "out" / "report.md").read_text()
+
+
+def test_margins_match_and_font_sizes_are_few(passing_run):
+    from latex_io import merge_tailored, read_tex
+    from layout_check import measure
+    from compile import probe_geometry
+
+    out, _, _ = passing_run
+    master = read_tex(FIXTURES / "sample_master.tex")
+    resume = merge_tailored(json.loads((out / "tailored.final.json").read_text()), master)
+    measured = measure(out / "resume.pdf", resume, probe_geometry(out / "resume.tex"))
+    assert measured.text_margins_in == {"left": 0.3, "right": 0.3}
+    assert measured.short_wraps == []
+    assert len(measured.font_sizes) <= 4
+
+
+def test_ragged_right_and_extra_sizes_fail_l14_l15(tmp_path, master, master_tex, tailored):
+    from latex_io import merge_tailored, write_tex
+    from compile import compile_tex
+    from layout_check import check_layout
+
+    tex = write_tex(merge_tailored(tailored, master, 3))
+    tex = tex.replace("\\linespread{0.99}\\selectfont", "\\raggedright\\linespread{0.99}\\selectfont", 1)
+    tex = tex.replace("{\\small Data Engineer II}", "{\\scriptsize Data Engineer II}", 1)
+    path = tmp_path / "ragged.tex"
+    path.write_text(tex, encoding="utf-8")
+    compiled = compile_tex(path)
+    assert compiled.ok
+    findings, measured = check_layout(compiled.pdf, path, merge_tailored(tailored, master, 3), None)
+    assert {"L14", "L15"} <= rules(findings, "block")
+    assert measured.short_wraps
+
+
+def test_template_check_flags_ragged_right(master_tex):
+    from latex_io import template_findings
+
+    ragged = master_tex.replace("\\linespread{0.99}\\selectfont", "\\raggedright\\linespread{0.99}\\selectfont", 1)
+    assert "L14" in rules(template_findings(ragged), "block")
+    assert "L14" not in rules(template_findings(master_tex))

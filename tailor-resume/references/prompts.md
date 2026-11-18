@@ -34,7 +34,8 @@ The user's own `Resume Lab/banned-words.txt` adds to both lists. The only except
 - Digits, not words: "5", not "five". Thousands use K and millions use M everywhere: 2K, 500K, 2M. Round with care: 4,547 is 4.5K, 1,223 is 1.2K.
 - Symbols as words: "about 25", not "~25"; "then" or "to", not an arrow. Dollar and percent signs stay.
 - Spell a tool the way the posting does when it names the same tool: "PostgreSQL" if the posting says PostgreSQL and the master says Postgres.
-- Dates: "Aug 2022 – May 2026", three-letter months, "Present" for current. Copy them from the master.
+- Dates: "August 2022 – May 2026", full month names, "Present" for current. Copy them from the master. Abbreviations read as mixed styles to ATS checkers, because "May" is both a full name and an abbreviation.
+- Education (C15): school, then the degree with its major ("Bachelor of Science in Computer Science"), GPA in its own field, then dates. No college or honors-program names in the degree. It comes from the master; do not change it.
 
 ## Truthfulness rules
 

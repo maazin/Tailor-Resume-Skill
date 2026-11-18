@@ -96,7 +96,7 @@
       ],
       "description": [
         "Launched a trail-conditions API that merges 3 public weather feeds and 1.2K ranger reports into one PostgreSQL database, serving 900 weekly requests from a Python and FastAPI backend on a single $7 server",
-        "Cut average response time from 480ms to 95ms by caching forecast lookups in Redis with a 15-minute expiry, measured across 10K replayed requests taken from production access logs of the FastAPI service",
+        "Cut average response time from 480ms to 95ms by caching forecast lookups in Redis with a 15-minute expiry, measured across 10K replayed requests taken from production access logs of the FastAPI service and its PostgreSQL database",
         "Automated deploys with Docker and a GitHub Actions pipeline that ran 140 pytest tests on every push, taking a release from 12 manual steps down to 1 merged pull request for the whole PostgreSQL and Redis stack"
       ]
     },

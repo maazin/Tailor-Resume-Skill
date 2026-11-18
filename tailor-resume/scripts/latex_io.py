@@ -4,6 +4,7 @@ The reader understands one family of templates: Jake's Resume macros as the
 user's master file uses them.
 
   \\resumeSubheading{Organization}{Location}{Role or Degree}{Dates}
+  \\resumeEducation{School}{Degree in Major}{GPA or empty}{Dates}
   \\resumeProject{\\link{url}{Name} $\\vert$ \\emph{Tech, Stack}}{Dates or empty}
   \\resumeItem{bullet text}
   % \\resumeItem{a commented-out alternate bullet}      <- still a master bullet
@@ -49,6 +50,7 @@ from common import (
 
 KNOWN_MACROS = {
     "resumeSubheading",
+    "resumeEducation",
     "resumeProject",
     "resumeProjectHeading",
     "resumeItem",
@@ -400,7 +402,7 @@ def read_tex_string(tex: str) -> dict[str, Any]:
         raise LatexFormatError(
             "this file uses macros the reader does not know: "
             + ", ".join("\\" + name for name in unknown)
-            + ". Known: \\resumeSubheading, \\resumeProject, \\resumeProjectHeading, \\resumeItem."
+            + ". Known: \\resumeSubheading, \\resumeEducation, \\resumeProject, \\resumeProjectHeading, \\resumeItem."
         )
 
     first_section = body.find(r"\section")
@@ -426,6 +428,7 @@ def read_tex_string(tex: str) -> dict[str, Any]:
         "contact_order": header["contact_order"],
         "sections": [],
         "project_macro": "resumeProject",
+        "education_macro": "resumeSubheading",
         "project_heading": {"separator": r"$\vert$", "link": "link" if r"\newcommand{\link}" in preamble else "href"},
         "skills_begin": r"\begin{itemize}[leftmargin=0.15in,label={},topsep=3pt,parsep=0pt]",
     }
@@ -457,14 +460,25 @@ def read_tex_string(tex: str) -> dict[str, Any]:
         current: dict[str, Any] | None = None
         cursor = 0
         macro_re = re.compile(
-            r"\\(resumeSubheading|resumeProjectHeading|resumeProject|resumeAltItem|resumeItem)(?![A-Za-z])"
+            r"\\(resumeSubheading|resumeEducation|resumeProjectHeading|resumeProject|resumeAltItem|resumeItem)(?![A-Za-z])"
         )
         while True:
             macro = macro_re.search(section_body, cursor)
             if not macro:
                 break
             name = macro.group(1)
-            if name == "resumeSubheading":
+            if name == "resumeEducation":
+                args, cursor = read_args(section_body, macro.end(), 4)
+                if key != "education":
+                    raise LatexFormatError(r"\resumeEducation outside the education section")
+                plain = [detex(a) for a in args]
+                current = {
+                    "institution": plain[0], "location": "", "degree": plain[1],
+                    "gpa": plain[2], "years": plain[3], "description": [],
+                }
+                template["education_macro"] = "resumeEducation"
+                resume[key].append(current)
+            elif name == "resumeSubheading":
                 args, cursor = read_args(section_body, macro.end(), 4)
                 if key == "personalProjects":
                     raise LatexFormatError(r"\resumeSubheading inside the projects section; use \resumeProject")
@@ -559,6 +573,12 @@ def template_findings(tex: str) -> list[Finding]:
     need(
         bool(sub) and "tabular" not in (sub.group(1) if sub else "tabular") and r"\hfill" not in (sub.group(1) if sub else ""),
         "D12", r"\resumeSubheading must print role, organization, location and dates on one line (no tabular, no \hfill)",
+    )
+    outside_titles = re.sub(r"\\titleformat\s*\{\\section\}\{[^\n]*", "", live_preamble)
+    need(
+        not re.search(r"\\raggedright(?![A-Za-z])", outside_titles),
+        "L14", r"body text must be justified so wrapped lines end at the right margin: remove the global "
+        r"\raggedright and set \hyphenpenalty=10000 so words are not split",
     )
     need(
         not re.search(r"\\[Nn]eedspace", live_preamble + live_body),
@@ -741,6 +761,12 @@ def _write_section(resume: dict[str, Any], section: dict[str, Any]) -> list[str]
             lines.append(f"  \\{template['project_macro']}")
             lines.append(f"    {{{first}}}{{}}")
         else:
+            if key == "education" and template.get("education_macro") == "resumeEducation":
+                lines.append(r"  \resumeEducation")
+                lines.append(f"    {{{entex(entry.get('institution', ''))}}}{{{entex(entry.get('degree', ''))}}}")
+                lines.append(f"    {{{entex(entry.get('gpa', ''))}}}{{{entex(entry.get('years', ''))}}}")
+                lines += _write_items(entry)
+                continue
             org = entry.get("institution" if key == "education" else "company", "")
             role = entry.get("degree" if key == "education" else "title", "")
             lines.append(r"  \resumeSubheading")

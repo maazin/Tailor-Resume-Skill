@@ -1,4 +1,4 @@
-"""Layout rules L1 to L13, measured on the compiled PDF, and the page-fill loop.
+"""Layout rules L1 to L15, measured on the compiled PDF, and the page-fill loop.
 
 Every rule is checked on the real page with pdfminer, not guessed from
 character counts: how many lines each bullet prints on, how full its last
@@ -51,6 +51,9 @@ MIN_LAST_LINE_FILL = 0.50  # L5
 MAX_ENTRYGAP_PT = 9.0  # L10
 MAX_SECTIONGAP_PT = 12.0  # L10
 MAX_CONTENT_PASSES = 4
+MAX_FONT_SIZES = 4  # L15: headings, subheadings and content, no more than four sizes
+MARGIN_MATCH_IN = 0.02  # L14: left and right text margins within this of each other
+WRAP_END_TOLERANCE_PT = 1.5  # L14: a wrapped line must reach the right margin
 BULLET_MARKS = ("\u2022",)
 DASH_MARKS = ("\u2013", "-", "\u2014", "\u2212")
 SYMBOLS = {  # L12
@@ -93,6 +96,9 @@ class PageMeasure:
     bottom_gap_pt: float | None = None
     margins_in: dict[str, float] = field(default_factory=dict)
     chars_per_line: int = 0
+    font_sizes: dict[float, int] = field(default_factory=dict)
+    text_margins_in: dict[str, float] = field(default_factory=dict)
+    short_wraps: list[tuple[str, float]] = field(default_factory=list)  # (where, points short of the margin)
 
     def char_guide(self) -> tuple[int, int] | None:
         """Bullet length, in characters, that prints on 2 lines with the second
@@ -105,6 +111,27 @@ class PageMeasure:
 # --------------------------------------------------------------------------
 # Measuring the PDF
 # --------------------------------------------------------------------------
+
+
+def font_sizes(pdf_path: str | Path) -> dict[float, int]:
+    """Characters per font size on the page, rounded to 0.1pt, as a parser sees them."""
+    from pdfminer.high_level import extract_pages
+    from pdfminer.layout import LAParams, LTChar
+
+    counts: dict[float, int] = {}
+
+    def walk(item: Any) -> None:
+        if isinstance(item, LTChar):
+            if item.get_text().strip():
+                size = round(item.size, 1)
+                counts[size] = counts.get(size, 0) + 1
+            return
+        for child in getattr(item, "_objs", []) or []:
+            walk(child)
+
+    for page in extract_pages(str(pdf_path), laparams=LAParams(all_texts=True)):
+        walk(page)
+    return dict(sorted(counts.items(), reverse=True))
 
 
 def pdf_lines(pdf_path: str | Path) -> tuple[list[list[Line]], list[tuple[float, float]]]:
@@ -199,6 +226,11 @@ def measure(pdf_path: str | Path, resume: dict[str, Any], geometry: Geometry | N
         result.bullets.append(
             BulletMeasure(where=where, text=text, lines=current["lines"], last_line_fill=round(fill, 3), chars=len(text))
         )
+        # Every line but the last one wrapped; justified text ends it at the margin.
+        for wrapped in current["wrapped"]:
+            short = right_edge - wrapped.x1
+            if short > WRAP_END_TOLERANCE_PT:
+                result.short_wraps.append((where, round(short, 1)))
         current = None
 
     for line in lines:
@@ -223,11 +255,12 @@ def measure(pdf_path: str | Path, resume: dict[str, Any], geometry: Geometry | N
             # Text starts after the marker; the next line's x0 refines it.
             current = {
                 "lines": 1, "text": line.text, "text_x": line.x0 + 9.0, "last": line,
-                "refined": False, "first_chars": len(line.text) - 2,
+                "refined": False, "first_chars": len(line.text) - 2, "wrapped": [],
             }
             continue
         if current is not None and continuation_x is not None and line.x0 > continuation_x:
             current["lines"] += 1
+            current["wrapped"].append(current["last"])
             current["last"] = line
             if not current["refined"]:
                 current["text_x"] = line.x0
@@ -249,6 +282,13 @@ def measure(pdf_path: str | Path, resume: dict[str, Any], geometry: Geometry | N
     if len(pages) == 1 and geometry:
         lowest = min(l.y0 for l in pages[0])
         result.bottom_gap_pt = round(max(0.0, lowest - geometry.bottom_y), 2)
+    left_text = min(l.x0 for l in lines)
+    right_text = max(l.x1 for l in lines)
+    result.text_margins_in = {
+        "left": round(left_text / INCH, 3),
+        "right": round((result.page_width - right_text) / INCH, 3),
+    }
+    result.font_sizes = font_sizes(pdf_path)
     if geometry:
         result.margins_in = {
             "left": round(geometry.left / INCH, 3),
@@ -331,6 +371,30 @@ def page_findings(measured: PageMeasure, resume: dict[str, Any]) -> list[Finding
     guide = measured.char_guide()
     aim = f" Aim for about {guide[0]} to {guide[1]} characters in this template." if guide else ""
 
+    left, right = measured.text_margins_in.get("left"), measured.text_margins_in.get("right")
+    if left is not None and right is not None and abs(left - right) > MARGIN_MATCH_IN:
+        findings.append(
+            Finding("L14", "block",
+                    f"text starts {left:.2f} in from the left edge but ends {right:.2f} in from the right edge; "
+                    "the margins must match. Justify the body text so wrapped lines reach the right margin",
+                    where="page", value=f"{left:.2f}/{right:.2f}")
+        )
+    if measured.short_wraps:
+        sample = ", ".join(f"{where} ({points}pt)" for where, points in measured.short_wraps[:4])
+        findings.append(
+            Finding("L14", "block",
+                    f"{len(measured.short_wraps)} wrapped lines stop short of the right margin, so the right edge "
+                    f"looks ragged: {sample}. The body text must be justified",
+                    where="page", value=str(len(measured.short_wraps)))
+        )
+    if len(measured.font_sizes) > MAX_FONT_SIZES:
+        sizes = ", ".join(f"{size:g}pt ({count} characters)" for size, count in measured.font_sizes.items())
+        findings.append(
+            Finding("L15", "block",
+                    f"{len(measured.font_sizes)} font sizes on the page; use at most {MAX_FONT_SIZES} "
+                    f"(name, section headings, entry headings, content). Found: {sizes}",
+                    where="page", value=str(len(measured.font_sizes)))
+        )
     for side, value in measured.margins_in.items():
         if value < MIN_MARGIN_IN - MARGIN_TOLERANCE_PT / INCH:
             findings.append(
@@ -594,7 +658,7 @@ def fit(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Layout rules L1-L13 and the page-fill loop.")
+    parser = argparse.ArgumentParser(description="Layout rules L1-L15 and the page-fill loop.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     check = sub.add_parser("check")
@@ -621,6 +685,8 @@ def main(argv: list[str] | None = None) -> int:
                 "bullets": [asdict(b) for b in measured.bullets],
                 "bottom_gap_in": None if measured.bottom_gap_pt is None else round(measured.bottom_gap_pt / INCH, 3),
                 "margins_in": measured.margins_in,
+                "text_margins_in": measured.text_margins_in,
+                "font_sizes": {f"{k:g}": v for k, v in measured.font_sizes.items()},
                 "bullet_chars_guide": measured.char_guide(),
             }
             sys.stdout.write(dump_json(payload))

@@ -401,6 +401,12 @@ MONTHS = {
     "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
 }
 MONTH_ABBR = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+# The house style is full month names (C14). Three-letter abbreviations read as
+# mixed styles next to "May", which is a full name and an abbreviation at once.
+MONTH_NAMES = (
+    "January", "February", "March", "April", "May", "June", "July", "August",
+    "September", "October", "November", "December",
+)
 _DATE_TOKEN = re.compile(
     r"(?i)\b(?P<month>jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?,?\s+(?P<my>(?:19|20)\d{2})\b"
     r"|\b(?P<present>present|current|now|ongoing)\b"
@@ -422,14 +428,14 @@ def parse_dates(text: str) -> list[tuple[int, int] | str]:
 
 
 def format_date_range(text: str) -> str:
-    """Rewrite a date range in the one house format: "Aug 2022 – May 2026"."""
+    """Rewrite a date range in the one house format: "August 2022 – May 2026"."""
     parts = []
     for item in parse_dates(text):
         if item == "present":
             parts.append("Present")
         else:
             month, year = item  # type: ignore[misc]
-            parts.append(f"{MONTH_ABBR[month - 1]} {year}" if month else str(year))
+            parts.append(f"{MONTH_NAMES[month - 1]} {year}" if month else str(year))
     return " – ".join(parts) if parts else text.strip()
 
 

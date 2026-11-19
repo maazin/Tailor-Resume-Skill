@@ -243,7 +243,7 @@ def test_page_short_of_content_fails_l11(tmp_path, tailored, master, master_tex)
     result, resume = fit(tailored, master, tmp_path)
     assert result.ok and result.entrygap_pt == 9.0 and result.sectiongap_pt == 12.0
     findings, _ = check_layout(result.pdf, result.tex, resume, master_tex)
-    assert "L11" in rules(findings, "block")
+    assert "L11" in rules(findings, "warn") and "L11" not in rules(findings, "block")
 
 
 def test_wrapping_lines_are_caught(tmp_path, tailored, master, master_tex):
@@ -253,7 +253,7 @@ def test_wrapping_lines_are_caught(tmp_path, tailored, master, master_tex):
     tailored["personalProjects"][0]["stack"] += ["SQLAlchemy", "Alembic", "Pydantic", "Uvicorn", "Celery", "RabbitMQ", "Sentry", "Fly.io", "Cloudflare", "OpenTelemetry"]
     result, resume = fit(tailored, master, tmp_path)
     findings, _ = check_layout(result.pdf, result.tex, resume, master_tex)
-    assert {"L3", "L7"} <= rules(findings, "block")
+    assert {"L3", "L7"} <= rules(findings, "warn")
     assert "infra & tools" in next(f.value for f in findings if f.rule == "L3")
 
 
@@ -339,7 +339,7 @@ def test_ragged_right_and_extra_sizes_fail_l14_l15(tmp_path, master, master_tex,
     compiled = compile_tex(path)
     assert compiled.ok
     findings, measured = check_layout(compiled.pdf, path, merge_tailored(tailored, master, 3), None)
-    assert {"L14", "L15"} <= rules(findings, "block")
+    assert "L14" in rules(findings, "block") and "L15" in rules(findings, "warn")
     assert measured.short_wraps
 
 

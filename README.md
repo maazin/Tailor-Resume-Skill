@@ -49,7 +49,7 @@ Tests that compile a PDF are skipped when `pdflatex` or `pdftotext` is missing.
 | F1 to F10 | Fact gate: skills, employers, numbers, tools, dates and courses match the master, entry by entry | `fact_gate.py` |
 | C1 to C15 | Content: job title line, relocating line, bullet count, tense, digits, tool spelling, dates, education line | `format_check.py` |
 | W1 to W10 | Writing: no dashes, banned words, tacked-on clauses, filler triads, repeated verbs, hedges | `style_check.py` |
-| L1 to L15 | Layout, measured on the PDF: equal margins, at most 4 font sizes, 2-line bullets, one full page | `layout_check.py` |
+| L1 to L15 | Layout, measured on the PDF: equal margins and one page block; page fill, 2-line bullets and font sizes are warnings | `layout_check.py` |
 | Parse check | Text extracts cleanly with pdfminer and pdftotext | `parse_check/` |
 
 ## Credits

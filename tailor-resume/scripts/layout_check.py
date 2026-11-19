@@ -54,6 +54,10 @@ MAX_CONTENT_PASSES = 4
 MAX_FONT_SIZES = 4  # L15: headings, subheadings and content, no more than four sizes
 MARGIN_MATCH_IN = 0.02  # L14: left and right text margins within this of each other
 WRAP_END_TOLERANCE_PT = 1.5  # L14: a wrapped line must reach the right margin
+# Measured fit targets (margin floor, line counts, bottom gap, font sizes) are
+# reported as warnings so a resume is always produced. Equal margins (L14) and
+# one page (L9) still block.
+ADVISORY_RULES = frozenset({"L1", "L2", "L3", "L4", "L5", "L7", "L11", "L15"})
 BULLET_MARKS = ("\u2022",)
 DASH_MARKS = ("\u2013", "-", "\u2014", "\u2212")
 SYMBOLS = {  # L12
@@ -522,6 +526,9 @@ def page_findings(measured: PageMeasure, resume: dict[str, Any]) -> list[Finding
                     f"the limit is {MAX_BOTTOM_GAP_PT / INCH:.2f} in. Add the next-ranked project or a fourth bullet (C6)",
                     where="page", value=f"{measured.bottom_gap_pt / INCH:.2f}")
         )
+    for finding in findings:
+        if finding.rule in ADVISORY_RULES and finding.severity == "block":
+            finding.severity = "warn"
     return findings
 
 

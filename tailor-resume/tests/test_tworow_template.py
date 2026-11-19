@@ -124,7 +124,7 @@ def test_layout_and_parse_on_the_two_row_template(tmp_path, tworow, tailored_two
         compiled = compile_tex(path)
         assert compiled.ok, compiled.errors
         findings, measured = check_layout(compiled.pdf, path, resume, TWO_ROW.read_text(encoding="utf-8"))
-        assert ("L3" in rules(findings, "block")) is wraps
+        assert ("L3" in rules(findings, "warn")) is wraps
         assert "L14" not in rules(findings, "block")  # ragged right is the master's choice
         assert measured.bullets[0].section == "education"
         school_heading = measured.headings[0]

@@ -30,7 +30,7 @@ The user's own `Resume Lab/banned-words.txt` adds to both lists. The only except
 - One shape: past-tense action verb, what was done, the tool or method, then the result. Use a number in the result only when the master has it.
 - Past tense everywhere, including the current role.
 - No "I", "my" or "we". No period at the end.
-- Exactly 2 printed lines, the second at least half full. `run_checks.py` prints the character range that fits this template (`bullet_chars_guide`). To lengthen a bullet, add a true detail from the same master entry. Never pad.
+- Aim for 2 printed lines, the second at least half full (a warning, not a block). `run_checks.py` prints the character range that fits this template (`bullet_chars_guide`). To lengthen a bullet, add a true detail from the same master entry. Never pad.
 - Digits, not words: "5", not "five". Thousands use K and millions use M everywhere: 2K, 500K, 2M. Round with care: 4,547 is 4.5K, 1,223 is 1.2K.
 - Symbols as words: "about 25", not "~25"; "then" or "to", not an arrow. Dollar and percent signs stay.
 - Spell a tool the way the posting does when it names the same tool: "PostgreSQL" if the posting says PostgreSQL and the master says Postgres.

@@ -175,3 +175,11 @@ def test_dates_use_full_month_names(resume):
     for bad in ("May 2025 \u2013 Aug 2025", "May 2025 - August 2025", "05/2025 \u2013 08/2025"):
         resume["workExperience"][0]["years"] = bad
         assert "C14" in rules(check_dates(resume)), bad
+
+
+def test_c13_plural_is_the_same_spelling():
+    from format_check import check_spelling
+
+    resume = {"workExperience": [{"description": ["Built an LLM grading system in Python"]}]}
+    job = {"description_text": "Understanding of databases, APIs, LLMs", "requirements": {}}
+    assert [f for f in check_spelling(resume, job) if f.rule == "C13"] == []

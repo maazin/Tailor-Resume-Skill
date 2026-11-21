@@ -384,6 +384,10 @@ def check_spelling(resume: dict[str, Any], job: dict[str, Any]) -> list[Finding]
             continue
         if any(keyword_in_text(v, resume_text) for v in in_posting):
             continue
+        # Singular and plural are the same spelling: "LLM system" next to a posting's "LLMs".
+        stems = {v.lower().removesuffix("s") for v in in_posting}
+        if all(v.lower().removesuffix("s") in stems for v in in_resume):
+            continue
         findings.append(
             Finding("C13", "block",
                     f"the resume says '{in_resume[0]}' but the posting spells it '{in_posting[0]}'; use the posting's spelling",

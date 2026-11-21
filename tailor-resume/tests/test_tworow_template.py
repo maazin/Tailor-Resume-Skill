@@ -135,3 +135,25 @@ def test_layout_and_parse_on_the_two_row_template(tmp_path, tworow, tailored_two
             for item in result["passes"]:
                 assert item["content_recall"] >= 0.95, item["problems"]
                 assert item["order_fidelity"] >= 0.9, item
+
+
+@needs_tex
+def test_work_headings_follow_jakes_resume(tworow, tailored_tworow, tmp_path):
+    """C16: title | dates on row 1, company | location on row 2, the macro has no tabular."""
+    from compile import compile_tex
+    from format_check import check_headings
+    from parse_check.extract import extract_file
+
+    resume = merge_tailored(tailored_tworow, tworow, 2)
+    tex = write_tex(resume)
+    assert r"\textbf{#1}\hfill #2\par" in tex and "IfSubStr" not in tex.split(r"\begin{document}")[0].split("resumeSubheading}[4]")[1][:80]
+    path = tmp_path / "jake.tex"
+    path.write_text(tex, encoding="utf-8")
+    compiled = compile_tex(path)
+    assert compiled.ok, compiled.errors
+    text = extract_file(compiled.pdf).text
+    job = resume["workExperience"][0]
+    assert text.index(job["title"]) < text.index(job["company"])
+    assert check_headings(resume) == []
+    bad = dict(job, title=f"{job['title']} | {job['company']}")
+    assert {f.rule for f in check_headings({"workExperience": [bad]})} == {"C16"}

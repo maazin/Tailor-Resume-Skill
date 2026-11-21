@@ -283,7 +283,7 @@ def build_report(ctx: dict[str, Any]) -> str:
     lines += ["## Check results", ""]
     for title, key in (
         ("Template", "template_findings"), ("Fact gate (F1-F9)", "fact_findings"),
-        ("Content rules (C1-C15)", "format_findings"), ("Writing rules (W1-W10)", "style_findings"),
+        ("Content rules (C1-C16)", "format_findings"), ("Writing rules (W1-W10)", "style_findings"),
         ("Layout rules (L1-L15)", "layout_findings"),
     ):
         findings: list[Finding] | None = ctx.get(key)

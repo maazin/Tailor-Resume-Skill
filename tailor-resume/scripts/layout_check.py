@@ -36,7 +36,9 @@ from compile import CompileError, Geometry, compile_tex, probe_geometry
 from latex_io import (
     DEFAULT_ENTRYGAP_PT,
     DEFAULT_SECTIONGAP_PT,
+    LatexFormatError,
     merge_tailored,
+    read_group,
     read_tex,
     split_document,
     write_tex,
@@ -349,6 +351,14 @@ def _preamble_settings(tex: str) -> str:
     preamble = re.sub(r"(pdfkeywords|pdfsubject)\s*=\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", r"\1={}", preamble)
     preamble = re.sub(r"[ \t]*\\[Nn]eedspace\*?\{[^}]*\}[ \t]*\n?", "", preamble)
     preamble = re.sub(r"\\usepackage(?:\[[^\]]*\])?\{needspace\}[^\n]*\n", "", preamble)
+    # The entry-heading macro is replaced with Jake's two-row heading (C16).
+    match = re.search(r"\\(?:re)?newcommand\{\\resumeSubheading\}\[4\]\{", preamble)
+    if match:
+        try:
+            _, end = read_group(preamble, match.end() - 1)
+            preamble = preamble[: match.start()] + preamble[end:]
+        except LatexFormatError:
+            pass
     lines = [re.sub(r"(?<!\\)%.*$", "", line).strip() for line in preamble.split("\n")]
     return "\n".join(line for line in lines if line)
 
@@ -509,7 +519,10 @@ def page_findings(measured: PageMeasure, resume: dict[str, Any]) -> list[Finding
             )
 
     for heading in measured.headings:
-        allowed = template.get("education_heading_lines", 1) if heading["section"] == "education" else 1
+        allowed = {
+            "education": template.get("education_heading_lines", 1),
+            "workExperience": template.get("work_heading_lines", 1),
+        }.get(heading["section"] or "", 1)
         if heading["lines"] > allowed:
             is_project = heading["section"] == "personalProjects"
             findings.append(

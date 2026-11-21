@@ -95,7 +95,8 @@ def test_page_is_one_full_page_with_two_line_bullets(passing_run):
     assert len(measured.header_lines) == 3 and measured.header_lines[1] == "Data Engineer II"
     assert measured.header_lines[2].startswith("Relocating to Austin, TX")
     assert len(measured.skills_lines) == 4 and measured.dash_bullets == 0
-    assert all(h["lines"] == 1 for h in measured.headings)
+    # Jake's Resume headings (C16): work entries on two rows, others on one.
+    assert all(h["lines"] == (2 if h["section"] == "workExperience" else 1) for h in measured.headings)
     assert measured.margins_in == {"left": 0.3, "right": 0.3, "top": 0.3, "bottom": 0.3}
 
 
@@ -166,7 +167,7 @@ def test_report_has_every_section(passing_run):
     report = (out / "report.md").read_text(encoding="utf-8")
     for heading in ("## Scores", "### ATS sub-scores", "## Keyword coverage", "## Gaps", "## Page fill",
                     "## Bullets: before and after", "## AI-phrase filter", "## Check results",
-                    "### Fact gate (F1-F9)", "### Content rules (C1-C15)", "### Writing rules (W1-W10)",
+                    "### Fact gate (F1-F9)", "### Content rules (C1-C16)", "### Writing rules (W1-W10)",
                     "### Layout rules (L1-L15)", "### Parse check: Tailored", "### Parse check: Baseline"):
         assert heading in report, heading
     assert "| ATS score /10 | 7.9 | 9.2 |" in report

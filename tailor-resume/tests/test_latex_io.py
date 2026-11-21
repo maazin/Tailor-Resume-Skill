@@ -137,7 +137,8 @@ def test_reads_the_old_two_row_style_and_its_latex():
 
 def test_old_style_template_is_flagged():
     found = rules(template_findings(OLD_STYLE), "block")
-    assert {"D10", "D12", "L6", "L8"} <= found
+    assert {"D10", "L6", "L8"} <= found
+    assert "D12" in rules(template_findings(OLD_STYLE), "warn")  # tabular heading is replaced on write
     assert "L13" in rules(template_findings(OLD_STYLE), "info")
 
 

@@ -1,4 +1,4 @@
-"""Resume content rules C1 to C15, checked in code.
+"""Resume content rules C1 to C16, checked in code.
 
 Header
   C1  the job title line is the posting's title, cleaned of req numbers,
@@ -19,6 +19,10 @@ Bullets
   C14 dates as "August 2022 \u2013 May 2026": full month names, "Present"
   C15 education shows the school, the degree with its major, GPA in its own
       field, and the dates; no college or honors-program names in the degree
+  C16 entry headings in Jake's Resume style: each field holds one thing.
+      Job title and dates on the bold first row, company and location on the
+      italic second row; no separators, dates or locations inside a title or
+      company name
 
 CLI:
   format_check.py --master master.tex --tailored tailored.json --job job.json
@@ -453,6 +457,50 @@ def check_education(resume: dict[str, Any]) -> list[Finding]:
     return findings
 
 
+_HEADING_SEPARATOR = re.compile(r"\s[|\u2013\u2014-]\s|\|")
+_HEADING_DATE = re.compile(r"(?i)\b(?:19|20)\d{2}\b|\bpresent\b")
+
+
+def check_headings(resume: dict[str, Any]) -> list[Finding]:
+    """C16: Jake's Resume headings. Title | dates, then company | location, one thing per field."""
+    findings: list[Finding] = []
+    for index, entry in enumerate(resume.get("workExperience") or []):
+        title = str(entry.get("title") or "").strip()
+        company = str(entry.get("company") or "").strip()
+        location = str(entry.get("location") or "").strip()
+        where = company or f"work entry {index + 1}"
+        if not title or not company:
+            findings.append(
+                Finding("C16", "block", "a work heading needs both a job title (row 1) and a company (row 2)",
+                        where=where, value=f"{title} / {company}")
+            )
+        for name, value in (("job title", title), ("company", company)):
+            if _HEADING_SEPARATOR.search(value):
+                findings.append(
+                    Finding("C16", "block",
+                            f"the {name} '{value}' has a separator in it; each heading field holds one thing "
+                            "(job title, company, location, dates)", where=where, value=value)
+                )
+            if _HEADING_DATE.search(value):
+                findings.append(
+                    Finding("C16", "block", f"the {name} '{value}' contains a date; dates go on the right of row 1",
+                            where=where, value=value)
+                )
+            if location and location.lower() in value.lower():
+                findings.append(
+                    Finding("C16", "block", f"the {name} '{value}' repeats the location; it goes on the right of row 2",
+                            where=where, value=value)
+                )
+        if title and company and company.lower() in title.lower():
+            findings.append(
+                Finding("C16", "block", f"the job title '{title}' repeats the company name; the company goes on row 2",
+                        where=where, value=title)
+            )
+        if not str(entry.get("years") or "").strip():
+            findings.append(Finding("C16", "block", "the work heading has no dates", where=where))
+    return findings
+
+
 def run_format_check(
     resume: dict[str, Any],
     master: dict[str, Any],
@@ -466,11 +514,12 @@ def run_format_check(
         + check_spelling(resume, job)
         + check_dates(resume)
         + check_education(resume)
+        + check_headings(resume)
     )
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Content rules C1-C15.")
+    parser = argparse.ArgumentParser(description="Content rules C1-C16.")
     parser.add_argument("--master", required=True)
     parser.add_argument("--tailored", required=True)
     parser.add_argument("--job", required=True)

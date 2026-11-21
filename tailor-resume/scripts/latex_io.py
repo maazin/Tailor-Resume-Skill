@@ -661,8 +661,9 @@ def template_findings(tex: str) -> list[Finding]:
     )
     sub = re.search(r"\\newcommand\{\\resumeSubheading\}\[4\]\{(.*?)\n\}", live_preamble, re.DOTALL)
     need(
-        bool(sub) and "tabular" not in (sub.group(1) if sub else "tabular") and r"\hfill" not in (sub.group(1) if sub else ""),
-        "D12", r"\resumeSubheading must print role, organization, location and dates on one line (no tabular, no \hfill)",
+        not sub or "tabular" not in sub.group(1),
+        "D12", r"\resumeSubheading uses a tabular, which breaks text extraction; the tailored file replaces it "
+        r"with Jake's two-row heading built from \hfill (C16)", "warn",
     )
     need(
         not is_ragged_right(preamble),
@@ -715,7 +716,7 @@ def merge_tailored(
         "additional": {"technicalSkills": [], "certificationsTraining": []},
         "skillGroups": [],
         "sectionMeta": copy.deepcopy(master.get("sectionMeta") or []),
-        "_template": master.get("_template"),
+        "_template": _jake_template(master["_template"]) if master.get("_template") else None,
     }
     overrides = tailored.get("personalInfo") or {}
     for key in ("title", "location"):
@@ -766,6 +767,40 @@ def merge_tailored(
 # --------------------------------------------------------------------------
 
 
+# Jake's Resume entry heading, without the tabular (it breaks text extraction)
+# or the \\small second row (L15). Row 1 bold with the dates or location on
+# the right; row 2 italic with the location or dates on the right.
+JAKE_SUBHEADING = (
+    "% Jake's Resume entry heading (C16): bold first row, italic second row.\n"
+    "\\newcommand{\\resumeSubheading}[4]{\\item \\textbf{#1}\\hfill #2\\par\n"
+    "  \\textit{#3}\\hfill \\textit{#4}\\par}\n"
+)
+JAKE_WORK_ORDER = ["title", "years", "company", "location"]
+
+
+def _jake_template(template: dict[str, Any]) -> dict[str, Any]:
+    """The master's template with Jake's two-row entry headings (C16)."""
+    out = dict(template)
+    out["heading_style"] = "jake"
+    out["work_order"] = list(JAKE_WORK_ORDER)
+    out["work_heading_lines"] = 2
+    if out.get("education_macro") != "resumeEducation":
+        out["education_heading_lines"] = 2
+    return out
+
+
+def _with_jake_subheading(preamble: str) -> str:
+    match = re.search(r"(?m)^[ \t]*\\(?:re)?newcommand\{\\resumeSubheading\}\[4\]\{", preamble)
+    if not match:
+        anchor = preamble.find("\\newcommand{\\resumeSubHeadingListStart}")
+        anchor = anchor if anchor >= 0 else len(preamble)
+        return preamble[:anchor] + JAKE_SUBHEADING + preamble[anchor:]
+    _, end = read_group(preamble, match.end() - 1)
+    tail = preamble[end:]
+    tail = tail[1:] if tail.startswith("\n") else tail
+    return preamble[: match.start()] + JAKE_SUBHEADING + tail
+
+
 def _format_pt(value: float) -> str:
     return f"{value:.2f}".rstrip("0").rstrip(".") + "pt"
 
@@ -789,6 +824,8 @@ def _write_preamble(resume: dict[str, Any], entrygap: float | None, sectiongap: 
     preamble = resume["_template"]["preamble"]
     preamble = re.sub(r"[ \t]*\\[Nn]eedspace\*?\{[^}]*\}[ \t]*\n?", "", preamble)
     preamble = re.sub(r"\\usepackage(?:\[[^\]]*\])?\{needspace\}[^\n]*\n", "", preamble)
+    if resume["_template"].get("heading_style") == "jake":
+        preamble = _with_jake_subheading(preamble)
     if entrygap is not None:
         preamble = _set_length(preamble, "entrygap", entrygap)
     if sectiongap is not None:
@@ -884,9 +921,15 @@ def _write_section(resume: dict[str, Any], section: dict[str, Any]) -> list[str]
                 continue
             org = entry.get("institution" if key == "education" else "company", "")
             role = entry.get("degree" if key == "education" else "title", "")
+            location, years = entex(entry.get("location", "")), entex(entry.get("years", ""))
             lines.append(r"  \resumeSubheading")
-            lines.append(f"    {{{entex(org)}}}{{{entex(entry.get('location', ''))}}}")
-            lines.append(f"    {{{entex(role)}}}{{{entex(entry.get('years', ''))}}}")
+            if key == "workExperience" and template.get("heading_style") == "jake":
+                # Jake's experience order: title | dates, then company | location.
+                lines.append(f"    {{{entex(role)}}}{{{years}}}")
+                lines.append(f"    {{{entex(org)}}}{{{location}}}")
+            else:
+                lines.append(f"    {{{entex(org)}}}{{{location}}}")
+                lines.append(f"    {{{entex(role)}}}{{{years}}}")
         lines += _write_items(entry, bold_label=key == "education")
     lines.append(r"\resumeSubHeadingListEnd")
     return lines

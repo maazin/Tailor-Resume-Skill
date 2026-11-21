@@ -25,7 +25,7 @@ Also banned, from Resume-Matcher's AI-phrase list: spearheaded, orchestrated, ch
 
 The user's own `Resume Lab/banned-words.txt` adds to both lists. The only exception is a word inside a product, tool or skill name. A word is banned even when the posting uses it.
 
-## Content rules for bullets (C8 to C14)
+## Content rules for bullets and headings (C8 to C16)
 
 - One shape: past-tense action verb, what was done, the tool or method, then the result. Use a number in the result only when the master has it.
 - Past tense everywhere, including the current role.
@@ -35,6 +35,7 @@ The user's own `Resume Lab/banned-words.txt` adds to both lists. The only except
 - Symbols as words: "about 25", not "~25"; "then" or "to", not an arrow. Dollar and percent signs stay.
 - Spell a tool the way the posting does when it names the same tool: "PostgreSQL" if the posting says PostgreSQL and the master says Postgres.
 - Dates: "August 2022 – May 2026", full month names, "Present" for current. Copy them from the master. Abbreviations read as mixed styles to ATS checkers, because "May" is both a full name and an abbreviation.
+- Entry headings (C16), Jake's Resume style, written by `latex_io.py`: a job is two rows, the bold job title with the dates on the right, then the italic company with the location on the right. Education is the bold school with the location, then the italic degree with the dates. Each field holds one thing: no separators, dates or locations inside a job title or company name, and the title never repeats the company.
 - Education (C15): school, then the degree with its major ("Bachelor of Science in Computer Science"), GPA in its own field, then dates. No college or honors-program names in the degree. It comes from the master; do not change it.
 
 ## Truthfulness rules
